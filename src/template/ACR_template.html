@@ -22,12 +22,31 @@ body{font-family:Tahoma,"Times New Roman", Times, serif;}
 .disabled_section {pointer-events: none; opacity: 0.4;}
 .table th, .table td {
      border-top: none !important;
+	 padding: 25px;
 }
 .center {
     display: block;
     margin-left: auto;
     margin-right: auto;
     width: 30%;
+}
+
+.no-wrap {
+	white-space: nowrap;
+	text-wrap: wrap;
+}
+
+.tr-left {
+	text-align: left;
+	position: left;
+	text-wrap: wrap;
+}
+
+.table {
+	width: 100%;
+	margin-bottom: 20px;
+	position: relative;
+	table-layout: fixed;
 }
 
 section {
@@ -73,10 +92,14 @@ border-bottom-left-radius: 5px;  border-bottom-right-radius: 5px;}
 .velmnt_finished {color: green;}
 
 .scale {font-size: 100%; padding:0px}
-.scale td { text-align: left; padding:0px;}
+.scale td { text-align: left; padding:2px;}
 .scale label { display:block;}
-.scale .c { text-align: center;}
-.table > tbody > tr > td {padding:0;}
+.scale .c { text-align: left;}
+.table > tbody > tr > td {
+	padding: 5px;
+	text-align: left;
+	align-items: left;
+}
 
 .bg1 {background-image: url("https://audiosamplesp808.blob.core.windows.net/p910-assets/imgs/clips_a.png");}
 .bg2 {background-image: url("https://audiosamplesp808.blob.core.windows.net/p910-assets/imgs/clips_b.png");}
@@ -396,6 +419,7 @@ $(function() {
 			$("#calibration :input").removeAttr("required");
 			cookie_debug_status=cookie_debug_status+"Calibration Exist*";
 			activate_setup_section(true);
+			activate_rest_setup(); // since disabled visual acuity/triangles
 		}
 
 		// given cookie availability disable the setup
@@ -657,8 +681,9 @@ function isSetupDone(){
 	if(!$("input[name='cmp2']").is(':checked')) return;
 	if(!$("input[name='cmp3']").is(':checked')) return;
 
-	if(!$("input[name='t2_circles']").val()) return;
-	if(!$("input[name='t2_triangles']").val()) return;
+	// Disable matrix test
+	// if(!$("input[name='t2_circles']").val()) return;
+	// if(!$("input[name='t2_triangles']").val()) return;
 	validateSetupAnswer();
 }
 
@@ -828,16 +853,23 @@ function reset_visual_acuity(){
 **/
 function continue_visual_acuity(){
 	if (!interact_with_screen_size){
-		alert("First, you need to interact with screen adjustment part.");
+		alert("Please interact with the screen adjustment buttons");
 		return;
 	}
 	record_screen_size_credit_card();
 	$("#vat_step").attr("src","https://audiosamplesp808.blob.core.windows.net/p910-assets/imgs/step2.png");
 
 	$('#setup_visual_acity').hide();
-	$('#test_visual_acity').show();
+	// Disable step 2, landolt rings and set it result to passed
+	//$('#test_visual_acity').show();
+	visual_acuity_test_passed = true;
+	performed_visual_acuity_test = true;
 	$('#setup_ready').hide();
 	$('#setup_visual_acity').hide();
+	$(".lc").prop("disabled",true);
+	$("#lc_msg").html("<p style='color:green'>Visual acuity check passed.</p>");
+
+	isQualificationDone();
 	// set the size of landolt c
 	/**
 	Landolt C size  calculation
@@ -1209,19 +1241,21 @@ function check_brightness_test(){
 	$("#matrix_t1_circle_history").val($("#matrix_t1_circle_history").val()+','+c);
 	$("#matrix_t1_triangle_history").val($("#matrix_t1_triangle_history").val()+','+t);
 
-	if (c==(correct_ans['circles'] -2)&& t == (correct_ans['triangles']-3)){
-		//alert('Great! Your answer is correct, continue!');
-		$("#check_matrix").prop("disabled",true);
-		activate_rest_setup();
-	}else{
-		num_tries_block_matrix++;
-		if (correct_ans['max_tries']-num_tries_block_matrix == 0){
-			disableTheHIT(Hide_HIT_REASON.QUALIFICATION_FAILED_NOW);
-			return;
-		}
-		alert('hmm! not correct, try to change your screen brightness, light in the room, or your position, and try again!\n'+
-		'You can try {0} more time(s).'.f(correct_ans['max_tries']-num_tries_block_matrix));
-	}
+	// disabled for ic3mi study
+	activate_rest_setup();
+	// if (c==(correct_ans['circles'] -2)&& t == (correct_ans['triangles']-3)){
+	// 	//alert('Great! Your answer is correct, continue!');
+	// 	$("#check_matrix").prop("disabled",true);
+	// 	activate_rest_setup();
+	// }else{
+	// 	num_tries_block_matrix++;
+	// 	if (correct_ans['max_tries']-num_tries_block_matrix == 0){
+	// 		disableTheHIT(Hide_HIT_REASON.QUALIFICATION_FAILED_NOW);
+	// 		return;
+	// 	}
+	// 	alert('hmm! not correct, try to change your screen brightness, light in the room, or your position, and try again!\n'+
+	// 	'You can try {0} more time(s).'.f(correct_ans['max_tries']-num_tries_block_matrix));
+	// }
 }
 
 /**
@@ -1430,11 +1464,24 @@ function getSum(total, num) {
 function onValueChangeForTpQuestionInTraining(){
 	if(!('knownQuestionInTrainingAns' in config))
 		return;
-	if ($( this ).val()  != config['knownQuestionInTrainingAns']){
-		alert('Error: your answer does not seem to be correct. Watch the video again carefully and follow the instruction?');
+	if (!passTrappingQuestion($( this ).val())){
+		alert('Error: your answer does not seem to be correct. Watch the video again carefully and follow the instructions.');
 		$(this).prop('checked', false);
 	}
 
+}
+
+/*
+	Checks if the user answer is valid. For our ic3mi use case 
+	we choose to allow slightly better and slightly worse (nearby answers) as valid answers. 
+*/
+function passTrappingQuestion(userAnswer) {
+	let userAnswerInt = parseInt(userAnswer);
+	let answer = parseInt(config['knownQuestionAns']);
+	// allow "slightly better" and "slightly worse" answers to be valid as well
+	var validAnswers = [answer - 1, answer, answer + 1]; // 2, 3, 4 in our case
+	let answerIsValid = validAnswers.includes(userAnswerInt);
+	return answerIsValid;
 }
 
 /*
@@ -1444,7 +1491,7 @@ function onValueChangeForTpQuestionInTraining(){
 function onValueChangeForTpQuestion(){
 	if(!('knownQuestionAns' in config))
 		return;
-	if ($( this ).val()  == parseInt(config['knownQuestionAns']))
+	if (passTrappingQuestion($( this ).val()))
 		$('#tp_check').val(0);
 	else
 		$('#tp_check').val(-1);
@@ -1586,6 +1633,7 @@ function on_calibration_performed(){
 	$("#alert-calibration").show();
 	createCookie(config['cookieName']+"_calibration","un_important",config['showSetupEveryMinutes']);
 	activate_setup_section(true);
+	activate_rest_setup();
 }
 
 
@@ -1642,11 +1690,11 @@ function getACRScale(type, is_training){
 	if (is_training) p = 't';
 
 	template5 =
-	'<tr><td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="5">Excellent</label></div></td><td class="c">5</td></tr>'+
-	'<tr><td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="4">Good</label></div></td><td class="c">4</td></tr>'+
-	'<tr><td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="3">Fair</label></div></td><td class="c">3</td></tr>'+
-	'<tr><td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="2">Poor</label></div></td><td class="c">2</td></tr>'+
-	'<tr><td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="1"required="">Bad</label></div></td><td class="c">1</td></tr>';
+	'<tr class="tr-left"><td class="no-wrap"><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="1"required="">Left is much better</label></div></td>'+
+	'<td class="no-wrap"><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="2">Left is slightly better</label></div></td>'+
+	'<td class="no-wrap"><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="3">Quality is comparable</label></div></td>'+
+	'<td class="no-wrap"><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="4">Right is slightly better</label></div></td>'+
+	'<td class="no-wrap"><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="5">Right is much better</label></div></td></tr>';
 
 
 	template9 =
@@ -1677,12 +1725,13 @@ function generate_training_section(){
 	dcr_nav_tab = '<li class="nav-item {1}"><a class="nav-link " data-toggle="tab"  href="#T{0}-panel" id="T{0}-tab " role="tab" aria-controls="T{0}" {2}>Q. {0}</a></li>';
 	dcr_tab ='<div class="tab-pane fade {2}" id="T{0}-panel" role="tabpanel" aria-labelledby="T{0}-tab"><p></p>'+
 	'<div class="row">	<div class="col-sm-2"></div>	<div class="col-sm-8">'+
-	'<p style="margin-top:10px;">{0}. How do you rate the quality of the following video clip? </p> <div class="row"> <p align="center">'+
+	'<p style="margin-top:10px;">{0}. How do you rate the quality of the following video clips? </p> <div class="row"> <p align="center">'+
 	'<span class="velmnt" id="t{0}" data-src-clip="{1}" data-onfinished="playedVideoTraining" data-scale="{{cfg.video_player}}">&nbsp;</span> </p> </div> </div> <div class="col-sm-2"></div> </div>'+
-	'<div class="row">	<div class="col-sm-4"></div>	<div class="col-sm-4">'+
-	'<fieldset id="fieldset_t{0}" class="trainingFieldset" title=""><table class="table md scale" cellspacing="0" cellpadding="0"><thead><tr><th >The quality is</th><th class="c" >Score</th></tr></thead><tbody>'+
+	'<div class="row"> <div>'+
+	'<fieldset id="fieldset_t{0}" class="trainingFieldset" title="">'+
+	'<table class="table md scale" cellspacing="0" cellpadding="0"><thead><tr><th >Comparison</th></tr></thead><tbody>'+
 	getACRScale(config['scale_points'], true)+
-	'</tbody></table></fieldset><p></p></div> <div class="col-sm-4"></div></div> </div>';
+	'</tbody></table></fieldset><p></p></div></div> </div>';
 
 	// this will show which url was shown by in which question as their orther will be randomized
 	input_template= '<input id="T{0}_URL" name="T{0}_URL" type="hidden" value="{1}" />';
@@ -1714,12 +1763,13 @@ function generate_rating_section(){
 	dcr_nav_tab = '<li class="nav-item {1}"><a class="nav-link " data-toggle="tab"  href="#Q{0}-panel" id="Q{0}-tab " role="tab" aria-controls="Q{0}" {2}>Q. {0}</a></li>';
 	dcr_tab ='<div class="tab-pane fade {2}" id="Q{0}-panel" role="tabpanel" aria-labelledby="Q{0}-tab"><p></p>'+
 	'<div class="row">	<div class="col-sm-2"></div>	<div class="col-sm-8">'+
-	'<p style="margin-top:10px;">{0}. How do you rate the quality of the following video clip?? </p> <div class="row"> <p align="center">'+
+	'<p style="margin-top:10px;">{0}. How do you rate the quality of the following video clips? </p> <div class="row"> <p align="center">'+
 	'<span class="velmnt" id="Q{0}" data-src-clip="{1}" data-onfinished="playedVideoQ" data-scale="{{cfg.video_player}}">&nbsp;</span> </p> </div> </div> <div class="col-sm-2"></div> </div>'+
-	'<div class="row">	<div class="col-sm-4"></div>	<div class="col-sm-4">'+
-	'<fieldset id="fieldset_q{0}" title=""><table class="table md scale" cellspacing="0" cellpadding="0"><thead><tr><th >The quality is</th><th class="c" >Score</th></tr></thead><tbody>'+
+	'<div class="row"> <div>'+
+	'<fieldset id="fieldset_q{0}" title="">'+
+	'<table class="table md scale" cellspacing="0" cellpadding="0"><thead><tr><th >Comparison</th></tr></thead><tbody>'+
 	getACRScale(config['scale_points'], false)+
-	'</tbody></table></fieldset><p></p></div> <div class="col-sm-4"></div></div> </div>';
+	'</tbody></table></fieldset><p></p></div> </div> </div>';
 
 	// this will show which url was shown by in which question as their orther will be randomized
 	input_template= '<input id="Q{0}_URL" name="Q{0}_URL" type="hidden" value="{1}" />';
@@ -1749,7 +1799,7 @@ function generate_rating_section(){
 // All functions needed for custom audio playback
 // NOTE: for longer videos fragmentation might be needed.
 // data-scale can be no-scale or max-height, default:no-scale
-const video_played_finished = new Map();
+const video_num_loops = new Map();
 const video_play_start_time = new Map();
 const video_play_time_update_listeners = new Map();
 
@@ -1814,12 +1864,26 @@ function fullscreen_closed(e, video, caller){
         let oldH=video.getAttribute("oldheight");
         let oldW=video.getAttribute("oldwidth");
         video.setAttribute("width",oldW);
-        video.setAttribute("height",oldH);
+
+		// funky patch to fix portrait videos stretching when exiting fullscreen
+		// sometimes upon exit their heights would be set, causing the mini video player to stretch 
+		// vertically, temp fix by setting height to null on exit.
+		if (oldH > (oldW / 2)) {
+			video.setAttribute("height", null);
+		} else {
+			// If not vertical, keep old functionality
+			video.setAttribute("height", oldH);
+		}
+
         video.removeAttribute("oldwidth");
         video.removeAttribute("oldheight");
 		$( "#video_"+id ).closest( "td" ).addClass("vtd");
-		if (video_played_finished.get(idT) != 1 ){
-				alert("The video must be watched fully and in fullscreen mode.");
+		// Infinite looping but still warn user if they do not watch the whole video at least once.
+		if (video_num_loops.get(idT) < 1){ // idText
+			alert("Please watch the entire video from start to finish.");
+		} else {
+			let is_first_video = idT.indexOf('video1_') == 0;
+			end_video(id, is_first_video);
 		}
    }
 }
@@ -1944,7 +2008,7 @@ function playVideo_continue(id, video, is_dcr){
     let oldW=video.getAttribute("width");
     let fullW=screen.width;
     let fullH=screen.height;
-    //change height and width
+
     video.setAttribute("oldwidth",oldW);
     video.setAttribute("oldheight",oldH);
 	let scale_type = "";
@@ -1957,6 +2021,16 @@ function playVideo_continue(id, video, is_dcr){
 		$( "#"+video.id ).closest( "td" ).removeClass("vtd");
 		video.setAttribute("height",fullH);
 		video.setAttribute("width",fullW);
+
+		// fix vertical videos
+		const videoAspectRatio = (video.videoWidth / 2) / video.videoHeight; 
+		const offsetPx = 15; // slight offset so vertical videos can show timestamp
+
+		// fit by height if portrait mode 
+		if (videoAspectRatio < 1) { 
+			video.setAttribute("width", (fullH * videoAspectRatio) - offsetPx);
+			video.setAttribute("height", fullH - offsetPx);
+		}
 	}
 
     video.play();
@@ -2038,43 +2112,17 @@ function isended(){
 	var ae=this;
 	var idText =this.id;
 	var id=idText.substring(7,idText.length);
-    //console.log("is_ended video {0}, time{1}".f(id, (new Date()).toISOString()));
-	is_first_time = video_played_finished.get(idText)==0;
-	video_played_finished.set(idText, 1);
-	let is_first_video = idText.indexOf('video1_')==0;
-	//this.currentTime = 0
 
- 	if (($("#{0}".f(id)).hasClass('dcr')) && is_first_video){
- 		let parent = document.getElementById(id);
-        parent.classList.add("bg2");
-        parent.classList.add("bg");
-        $("#{0} .vcontainer".f(id)).hide();
-        $("#video1_{0}".f(id)).hide();
-        $("#video2_{0}".f(id)).show();
-        var video = document.getElementById("video2_"+id);
-
-        // set the listeners for when fullscreen is closed
-		previous_caller  =  tmp_caller_func;
-		tmp_caller_func = function (e){ fullscreen_closed(e,video, tmp_caller_func) };
-		if (parent.requestFullscreen) {
-			parent.removeEventListener("fullscreenchange",previous_caller);
-			parent.addEventListener("fullscreenchange",tmp_caller_func);
-		} else if (parent.msRequestFullscreen) {
-			parent.removeEventListener("onmsfullscreenchange",previous_caller);
-			parent.addEventListener("onmsfullscreenchange",tmp_caller_func);
-		} else if (parent.mozRequestFullScreen) {
-			parent.removeEventListener("mozfullscreenchange",previous_caller);
-			parent.addEventListener("mozfullscreenchange",tmp_caller_func);
-		} else if (parent.webkitRequestFullscreen) {
-			parent.removeEventListener("webkitfullscreenchange",previous_caller);
-			parent.addEventListener("webkitfullscreenchange",tmp_caller_func);
-		}
-
-        scheduled_video_play = setTimeout(function(){ playVideo_continue(id, video, true); }, dcr_clip_name_duration);
-        split_screen_timer = setTimeout(function(){ screen_splitter_timer(id); }, 1000);
-    }else{
-        end_video(id, is_first_video);
-    }
+	let count = video_num_loops.get(idText);
+	is_first_time = count == 0;
+	video_num_loops.set(idText, count + 1);
+	
+	if (count < 10) {
+		ae.play();
+	} else {
+		let is_first_video = idText.indexOf('video1_')==0;
+		end_video(id, is_first_video);
+	}
 }
 
 /**
@@ -2133,8 +2181,10 @@ function end_video(id, is_first_video){
 
 		extra_duration = play_duration-expected_duration;
 		perc_delay = Math.abs(extra_duration)/expected_duration;
+		// since we allow infinite looping, do not want to disqualify a user if they watch for too long
 		if (extra_duration>max_accepted_extra_playing_time_sec ){
-			maximum_extra_playing_time_reached(id);
+			// maximum_extra_playing_time_reached(id);
+			console.log("video viewed more than once");
 		}
 	}
 	if (!is_first_video){
@@ -2150,6 +2200,16 @@ function issuePlayingVideo(videoElement, issue){
 	console.log(videoElement.id+": "+issue);
 }
 
+// Helper function for if we want to allow pausing a video while its playing. 
+// Briefly allowed but then disabled before we launched the study. 
+function togglePlayPause(event) {
+	var videoElement = event.target;
+	if (videoElement.paused) {
+        playVideo(videoElement);
+    } else {
+        pauseVideo(videoElement);
+    }
+}
 
 var velements_added = false;
 /**
@@ -2192,7 +2252,9 @@ $(function() {
 		t='<table class="velmnt_table" border="0">'+insert+' <tr><td class="vtd"> <div class="vcontainer">'+tmp+'<button id="velmnt_{0}" type="button" class="btn bn disabled"><span id ="velmnt_s_{0}" class="glyphicon glyphicon-repeat fast-right-spinner"></span></button></div></td></tr><tr><td><span id="velmnt_l_c_{0}" class="blabel" >00:00</span><span id="velmnt_l_d_{0}" class="blabel" > / 00:00</span></td></tr></table>';
 		$(this).append(t.f(id,title));
 		let video_id = "video1_"+id;
-		video_played_finished.set(video_id, 0);
+
+		// Set numloops to zero for every video
+		video_num_loops.set(video_id, 0);
 		videos_not_loaded_yet_set.add(video_id);
 
 		load_videos_to_storage('video1_{0}'.f(id));
@@ -2206,7 +2268,7 @@ $(function() {
 
 		if(is_two_video){
 			let video_id = "video2_"+id;
-			video_played_finished.set(video_id, 0);
+			video_num_loops.set(video_id, 0);
 			videos_not_loaded_yet_set.add(video_id);
 			load_videos_to_storage('video2_{0}'.f(id));
 			var videoElement = document.getElementById(video_id);
@@ -2288,6 +2350,7 @@ function addListenersToVideoElement(videoElement, is_dcr){
 		videoElement.addEventListener("suspend",function(){issuePlayingVideo(videoElement ,'suspend');},false);
 		videoElement.addEventListener("abort",function(){issuePlayingVideo(videoElement ,'abort');},false);
 		videoElement.addEventListener("error",function(){issuePlayingVideo(videoElement ,'error');},false);
+		// videoElement.addEventListener("click", togglePlayPause); // enable/disable pausing.
 }
 
 var problematic_urls="";
@@ -2295,7 +2358,7 @@ var problematic_urls="";
 	Called when the video is exit before finishing until the end.
 */
 function alertForbiddenChange(){
-	alert('You should watch until the end.');
+	alert('Please watch the full video.');
 	$(this).prop('checked', false);
 }
 
@@ -2377,33 +2440,37 @@ function avoidAnsweringBeforeWatchingThrough(){
 					<li><b>Qualification (just once):</b> Check if you are eligible to perform these HITs</li>
 					<li><b>Calibration (every <b class="setup_time"> 0</b> minutes):</b> Calibrate your screen to be able to perform these type of tasks</li>
 					<li><b>Setup (every <b class="setup_time"> 0</b> minutes):</b> Configure your system and validate it by answering 5 questions</li>
-					<li><b>Training (every <b class="training_time"> 0 </b>):</b> <b class="question_number_training"> 0 </b> questions, same as "Ratings" but appears just once a day</li>
-					<li><b>Rating:</b> Watch <b class="question_number"> 0 </b> video clips and give <b>your opinion about the quality of the video</b> you watched.</li>
+					<li><b>Training (every <b class="training_time"> 0 </b>):</b> <b class="question_number_training"> 0 </b> questions, same as "Ratings" but appears just once a day. Meant for warm-up. </li>
+					<li><b>Rating:</b> Watch <b class="question_number"> 0 </b> videos and give <b>your opinion about the relative quality of the side-by-side clips.</b></li>
 				</ul>
-				<p>Note that you should watch the videos in full screen size.</p>
-				<p>You should follow the below mentioned rules, otherwise your answers will be invalid.</p>
+				<p>Note that you should watch all videos in full screen. </p>
+				<p>You should follow the rules mentioned below, otherwise your answers will be invalidated.</p>
 				<p><b>Rules:</b></p>
 				<ul>
 					<li>You must use a <b class="instruction_device">XX</b>, otherwise your response will be rejected</li>
-					<li>You must perform the task in a good lighting condition without <b>glare on your screen</b> </li>
-					<li>Do not change the brightness of your screen and your distance to the screen after the Setup section.</li>
+					<li>You must perform the task in good lighting conditions without <b>glare on your screen</b> </li>
+					<li>Do not change the brightness of your screen or your distance to the screen after the Setup section.</li>
+					<li>If you finish a section and the following sections do not unlock automatically, please verify that you have answered all the previous 
+						checkboxes, text fields, etc. correctly. 
+					</li>
 				</ul>
 
 				<p><b>Payment:</b></p>
-				<p>The result of this experiment is <b>very important for us and other scientist</b> working in this area. We have methods that analyse the consistency of your answers. We will use these methods to rank the submitted assignments according to quality.</p>
+				<p>The results of this experiment are <b>very important to us and other scientists</b> working in this area. We have methods that analyze the consistency of your answers. We will use these methods to rank the submitted assignments according to quality.</p>
 				<p>For this experiment, we will pay a base reward of <b>${{cfg.hit_base_payment}}/HIT</b> for every accepted HIT. We have made available a set of <b class="max_allowed_hits">0 </b> different HITs. You will receive a bonus of:</p>
 
 				<ul>
-				  <li>${{cfg.quantity_bonus}}/HIT (for a total of <b>${{cfg.sum_quantity}}/HIT</b>) if you submit <b>more than {{cfg.quantity_hits_more_than}} HITs</b> or</li>
-				  <li>${{cfg.quality_bonus}}/HIT (for a total of <b>${{cfg.sum_quality }}/HIT</b>) if you submit <b>more than {{cfg.quantity_hits_more_than}} HITs</b> <u>and</u> be in the <b>top {{cfg.quality_top_percentage}}% quality group</b>.</li>
+				  <li>${{cfg.quantity_bonus}}/HIT (for a total of <b>${{cfg.sum_quantity}}/HIT</b>) if you submit <b>{{cfg.quantity_hits_more_than}} HITs</b></li>
+				  <!-- <li>${{cfg.quality_bonus}}/HIT (for a total of <b>${{cfg.sum_quality }}/HIT</b>) if you submit <b>more than {{cfg.quantity_hits_more_than}} HITs</b> <u>and</u> be in the <b>top {{cfg.quality_top_percentage}}% quality group</b>.</li> -->
 				</ul>
 
 				<p>Bonuses will be assigned with in 7 days.</p>
 				<b>Please perform up to <b class="max_allowed_hits"> 0 </b> HITs from this group. If you do more than that, the <u>rest will be rejected.</u></b>
+				<b>Completing 20 HITs should only take around 30-45 minutes. </b>
 
 				<h3>Attention: </h3>
-				  <p>This hit includes one or more Control clips (gold clips). Control clips are ones that we know that answer for and should be very easy to rate (they are clearly very good or very poor). We include control clips in the HIT to ensure raters are paying attention and their environment hasn't changed.
-					  Wrong answer to control clip(s) will result in rejection of the HIT.</p>
+				  <p>This HIT includes one or more Control clips (gold clips). Control clips are ones that we know that answer for and should be very easy to rate (One side is very clearly much better than the other). We include control clips in the HIT to ensure raters are paying attention and their environment hasn't changed.
+					  Wrong answers to control clip(s) will result in rejection of the HIT.</p>
   
 				  </p>
 
@@ -2466,7 +2533,7 @@ function avoidAnsweringBeforeWatchingThrough(){
 				  </div>
 			  </fieldset>
 
-			  <fieldset class="qualificationFieldset"><label>5.&nbsp;What device are you using now to do this HIT?</label>
+			  <fieldset class="qualificationFieldset"><label>5.&nbsp;What device are you using to do this HIT?</label>
 				  <div class="radio">
 					  <label> <input type="radio" name="5_device" value="mobile" required>Smartphone / Tablet</label>
 				  </div>
@@ -2480,14 +2547,14 @@ function avoidAnsweringBeforeWatchingThrough(){
 					  <label>Height: <input type="text" class="nospace" name="6_device_size_h" size="4" required></label>
 					  <label>Width: <input type="text" class="nospace" name="6_device_size_w" size="4" required></label>
 					  <span style="margin:0px 30px"></span>
-					  <span> What is the unite of your measurement?</span>
+					  <span> Unit of measurement: </span>
 					  <span> <label><input type="radio" name="6_1_unit" value="IN" required="">inch</label></span>
 					  <span> <label><input type="radio" name="6_1_unit" value="CM">cm</label></span>
 				  </div>
 			  </fieldset>
 
 			  <!-- color vision check -->
-			  <fieldset class="qualificationFieldset"><label>7.&nbsp; Type in the number you see in the following pictures. In case you do not see a number insert "x".</label>
+			  <fieldset class="qualificationFieldset"><label>7.&nbsp; Type in the number you see in the following pictures. If you do not see a number insert "x".</label>
 					<div class="table-responsive 2_lds">
 						  <table class="table" border="0" cellpadding="0" cellspacing="0" >
 							<tbody>	<tr>
@@ -2503,7 +2570,7 @@ function avoidAnsweringBeforeWatchingThrough(){
 				</fieldset>
 
 			  <!-- visual acuity check -->
-			  <fieldset class="qualificationFieldset"><label>8.&nbsp;This is a two-step visual acuity check. Please follow the setup instruction below and answer to the following 5 questions.</label>
+			  <fieldset class="qualificationFieldset"><label>8.&nbsp;Please perform the following visual acuity check. </label>
 
 				  		<div class="row" style="margin-top:20px">
 							<div class="col-md-2"></div>
@@ -2531,7 +2598,7 @@ function avoidAnsweringBeforeWatchingThrough(){
 						</div>
 					  	<div class="row" id ="test_visual_acity" style="display:none; margin:30px;">
 							<p><b>Step 2:</b></p>
-							<p>We will show you couple of broken rings with gaps which making them similar to the letter "C".  The rings may appear in different sizes and orientations.</p>
+							<p>We will show you a couple of broken rings with gaps which makes them similar to the letter "C".  The rings may appear in different sizes and orientations.</p>
 							<div class="row" style="margin: 30px ">
 										<div class="col-md-3" style=""></div>
 										<div class="col-md-2" ><img class="center-img"  src="https://audiosamplesp808.blob.core.windows.net/p910-assets/imgs/landoltc_cropped.png" alt="lc" style="width:30%;" ></div>
@@ -2541,7 +2608,7 @@ function avoidAnsweringBeforeWatchingThrough(){
 							</div>
 
 							<p>
-								Your task is for each ring to click the button on the side where the gap of the ring is.
+								Your task is to click the button facing the direction where the gap of the ring is.
 								There could be 8 orientations. In the examples above the gaps of the rings are on the  <b>&rarr;</b>, &darr;, and &nwarr;, from left to right respectively.
 								You should guess the location of the gap if you are not sure where it is.
   							</p>
@@ -2589,7 +2656,7 @@ function avoidAnsweringBeforeWatchingThrough(){
 
 <section class="container" id="qualification_msg">
 	<div  class="alert alert-warning" role="alert" >
-		Next section will be activated when you successfully pass the qualification.
+		The next section will be activated when you successfully pass the qualification section.
 	</div>
 </section>
 
@@ -2597,7 +2664,7 @@ function avoidAnsweringBeforeWatchingThrough(){
 
 <section class="container" id="alert-qualification" hidden>
 	<div  class="alert alert-success" role="alert" >
-		Well-done! Now you can continue to next section.
+		Well-done! Now you can continue to the next section.
 	</div>
 </section>
 
@@ -2642,7 +2709,7 @@ function avoidAnsweringBeforeWatchingThrough(){
 
 <section class="container" id="alert-calibration" hidden>
 	<div class="alert alert-success" role="alert">
-	  Well-done! Please continue to the next session.
+	  Well-done! Please continue to the next section.
 	</div>
 </section>
 
@@ -2655,8 +2722,9 @@ function avoidAnsweringBeforeWatchingThrough(){
 				</h3>
 			</div>
 			<div  class="panel-collapse collapse in" id="setup_panel">
+				<!-- this is the entire panel that dictates Setup (every 30 minutes) -->
 				<div class="panel-body">
-					<h4>Calibrate screen brightness / Light in your environment</h4>
+					<!-- <h4>Calibrate screen brightness / Light in your environment</h4>
 					<p>Make sure you have a proper environmental light for watching videos (no glare on your screen, neither too dark nor too bright).
 						Use the following task to manually calibrate the brightness of your display. <b>Please make sure to get a correct answer from this task before you continue.</b></p>
 					<p>For more information on how to change the brightness of screen use the following links:</p>
@@ -2666,32 +2734,23 @@ function avoidAnsweringBeforeWatchingThrough(){
 					</ul>
 
 				<p style="margin-top:50px">How many <b>circles and triangles</b> do you see in this picture?. You may <b>change</b> the brightness of your screen, light in your environment, or your position on your seat until you can see all of the shapes. </p>
+				 -->
 
-				<div class="row">
+				<!-- end Q1 triangles -->
+				<!-- start Q2 triangles -->
+				
+				<!-- end Q2 -->
 
-					<div class="col-sm-6" style = "padding:50px"><p>Q1. How many <b>circles</b> and <b>triangles</b> do you see in the image?</p>
-					 <!-- 4 circles and 10 triangles-->
-						<div style="margin-left:20px">
-							<div> <label> Circles: <input type="number" id="t1_circles" name="t1_circles" size="4" required></label></div>
-							<div> <label> Triangles: <input type="number" id="t1_triangles" name="t1_triangles" size="4" required></label></div>
-							<button type="button" class="btn btn-primary" onclick="check_brightness_test()" id="check_matrix">Check my answer</button>
-							<p>You can try it up to <b id="matirx_tries">3</b> times.</p>
-						</div>
-
-					</div>
-					<div class="col-sm-6" style = "padding: 30px"><img src="${t1_matrix_url}" alt="s1" width="80%"></div>
-				</div>
-
-				<div class="alert alert-warning" role="alert">
+				<!-- <div class="alert alert-warning" role="alert">
 			  		<b>NOTE:</b> After that, you are not allowed to change the screen brightness anymore.
-				</div>
+				</div> -->
 
-				<div id="alert-setup-step1" class="alert alert-success" role="alert" hidden>
+				<!-- <div id="alert-setup-step1" class="alert alert-success" role="alert" hidden>
   					Well-done! Now you can continue. For the next question you will not get a feedback, but your answer will be evaluated based on that beside others.
-				</div>
+				</div> -->
 
 				<div id="setup-rest" class="disabled_section">
-				<div class="row">
+				<!-- <div class="row">
 					<div class="col-sm-6" style = "padding:50px"><p>Q2. How many <b>circles</b> and <b>triangles</b> do you see in the image?</p>
 						<div style="margin-left:20px">
 							<div> <label> Circles: <input type="number" id="t2_circles" name="t2_circles" size="4" required></label></div>
@@ -2699,11 +2758,11 @@ function avoidAnsweringBeforeWatchingThrough(){
 						</div>
 					</div>
 					<div class="col-sm-6" style = "padding: 30px"><img src="${t2_matrix_url}" alt="t2_matrix_url" width="80%"></div>
-				</div>
+				</div> -->
 				<!-- Distance check-->
 				<h4>Distance from screen</h4>
 				<div class="alert alert-info" role="alert">
-			  		Please make sure you are in a proper distance from your screen. For this HIT it is <b>1.5 to 3 times of the height of you screen</b>.
+			  		Please make sure you are a proper distance away from your screen. For this HIT it is <b>1 to 2 times of the height of you screen</b>.
 				</div>
 				<div id="distance_test_cmps"></div>
 				</div>
@@ -2716,7 +2775,7 @@ function avoidAnsweringBeforeWatchingThrough(){
 
 <section class="container" id="alert-setup-complete" hidden>
 	<div class="alert alert-success" role="alert">
-	  Well-done! Now you can continue to next section.
+	  Well-done! Please continue to the next section.
 	</div>
 </section>
 
@@ -2731,50 +2790,51 @@ function avoidAnsweringBeforeWatchingThrough(){
 			</div>
 			<div  class="panel-collapse collapse in" id="instructionImp">
 			<div class="panel-body">
-			<p>Almost ready to start. </p>
-			<p>Here are <b>some</b> of impairments that you may observe within the test with an example. Please read the followings carefully and watch the videos before continuing:
-			</p>
+			<p>Almost ready to begin. Please carefully read the following. </p>
+			<p><b>Important Notes: </b></p>
 
 			<ul>
 
-			<li> The video (or part of it) can be <b>fragmented</b>. It means that part of the video sample is played <b>blocky</b> and <b>dismembered</b>.</li>
+			<li> Both video clips play back side by side in order to make it easier to compare one vs the other. We do not allow pausing in order to focus 
+				on the temporal nature of the video. If necessary, please try to watch the video as many times as you want to confirm your observations.
+			</li>
 
-			<div class="row">
+			<!-- <div class="row">
 				<p>Here is an example:</p>
 				<p align="center">
 						<span class="velmnt" id="ins_id1" data-src-clip="https://p910.azureedge.net/video/instruction_videos/videoSRC14_block_2.mp4" data-onfinished="playedVideoIns"></span>
 				</p>
-			</div>
-
-
-			<li> The video (or part of it) could be <b>not smooth</b> rather <b>jerky</b>, <b>stuttering</b>, and <b>wobbly</b>. In anotehr term, partly <b>discountinud</b>. </li>
-			<div class="row">
+			</div> -->
+			<li> While watching the video you may see parts of the person flicker (appear and disappear) more in one video vs the other. </li>
+			<!-- <div class="row">
 				<p>Here is an example:</p>
 				<p align="center">
 						<span class="velmnt" id="ins_id2" data-src-clip="https://p910.azureedge.net/video/instruction_videos/videoSRC14_dis_2.mp4" data-onfinished="playedVideoIns"></span>
 				</p>
-			</div>
-
-				<li> The video (or part of it) cloud be <b>blurred</b>, <b>unclear</b> or <b>washed out</b>.</li>
-			<div class="row">
+			</div> -->
+			<li> You may notice that certain parts of the person (e.g. fingers, hair buns, ears, eyeglasses) are missing throughout the video. </li>
+			<!-- <div class="row">
 				<p>Here is an example:</p>
 				<p align="center">
 						<span class="velmnt" id="ins_id3" data-src-clip="https://p910.azureedge.net/video/instruction_videos/videoSRC14_blur_2.mp4" data-onfinished="playedVideoIns"></span>
 				</p>
-			</div>
+			</div> -->
 
-			<li> It could also be a case that a combination of the above impairments happen.</li>
+			<li> The edge contour around a person may seem inaccurate or inconsistent (e.g. hair has gaps which do not show the desired background). </li>
 
-			</ul>
+			<li> It is not uncommon that multiple issues above appear to happen in tandem within the same clip. </li>
+
+			<li> It is very important that when watching a video that you fully concentrate on the entire scene. 
+				If something is distracting you, please watch the video again. </li>
+			<!-- </ul>
 
 			<b>Important notes:</b>
-			<ul>
-				<li> Impairments can happen in specific area (corners or center of image) and for a short period of time within a video clip.
-					So it is very important that when watching a video, fully concentrate on the entire scene. If something distracting you,
-					please watch the video again.</li>
-				<li>Your ratings will be used for scientific work, <u>please treat them very serious to contribute with valid results </u>.</li>
-				<li>You may think that an impairment your recognized was due to your Internet connection, but whatever you see in the
-					videos are created beforehand, and <b>not related to your network</b>, so <u>consider them all when you rate the <b>overall quality</b></u>.</li>
+			<ul> -->
+			<li> Impairments can happen in specific area (corners or center of image) and for a short period of time within a video clip.
+				So it is very important that when watching a video, fully concentrate on the entire scene.</li>
+			<li>Your ratings will be used for scientific work, <u>please treat them very seriously to contribute with valid results </u>.</li>
+			<li>You may think that an impairment you recognized was due to your Internet connection, but everything you see in the
+				videos was created beforehand, and is <b>not related to your network</b>, so <u>consider them all when you rate the <b>overall quality</b></u>.</li>
 			</ul>
 			</div>
 			</div>
@@ -2794,11 +2854,11 @@ function avoidAnsweringBeforeWatchingThrough(){
 				<div class="panel-body">
 				<p> Please answer the following <b class="question_number_training"> 0 </b> questions.
 					<p>For each question, please carefully watch the video clip by clicking on the play button in full-screen mode.
-					At the end, you should judge its quality by using one of the <x class="scale_levels">9</x> levels of the given scale.
-					Observe carefully the entire video clip before making your judgment.</p>
+					Compare both clips, the one on the left versus the one on the right, and decide on one of the 5 options.
+					Carefully observe the entire video clip before making your judgment. Feel free to watch the video clips as many times as you want.</p>
 
-				   <p> <b>Note</b> that the scale will be activated when the corresponding video clip played until the end. </p>
-				   <p> If you see a message follow the instruction as given in the message.</p>
+				   <!-- <p> <b>Note</b> that the scale will be activated when the corresponding video clip played until the end. </p> -->
+				   <p> If you see a message, follow its instructions.</p>
 
  				<!-- will be generated -->
 				<ul class="nav nav-tabs" role="tablist" id="trainingTabs">
@@ -2841,11 +2901,11 @@ function avoidAnsweringBeforeWatchingThrough(){
 			<div class="panel-body">
 				<p> Please answer the following <b class="question_number"> 0 </b> questions.</p>
 				<p>For each question, please carefully watch the video clip by clicking on the play button in full-screen mode.
-					At the end, you should judge its quality by using one of the <x class="scale_levels">9</x> levels of the given scale.
-					Observe carefully the entire video clip before making your judgment.</p>
+					Compare both clips, the one on the left versus the one on the right, and decide on one of the 5 options.
+					Carefully observe the entire video clip before making your judgment. Feel free to watch the video clips as many times as you want.</p>
 
-				   <p> <b>Note</b> that the scale will be activated when the corresponding video clip played until the end. </p>
-				   <p> If you see a message follow the instruction as given in the message.</p>
+				   <!-- <p> <b>Note</b> that the scale will be activated when the corresponding video clip played until the end. </p> -->
+				   <p> If you see a message, follow its instructions. </p>
 
 
  				<!-- will be generated -->
@@ -2866,7 +2926,7 @@ function avoidAnsweringBeforeWatchingThrough(){
 
 
 <section class="container" id="thanks">
-	<p>Thanks for your participation. Please perform more HITs from this group when they are available for you.</p>
+	<p>Thank you for your participation. Please perform more HITs from this group when they are available to you.</p>
 </section>
 
 <section class="container" id="max_allowed_HITs_reached" hidden>

@@ -188,6 +188,7 @@ function playVideo(video){
 	video_play_start_time.set(id, Date.now());
 }
 
+
 function pauseVideo(video){
 	video.pause();
 	var idT=video.id;
@@ -257,6 +258,15 @@ function isended(){
 	}
 }
 
+function togglePlayPause(event) {
+	var ae = event.target;
+	if (videoElement.paused) {
+        playVideo(videoElement);
+    } else {
+        pauseVideo(videoElement);
+    }
+}
+
 function issuePlayingVideo(videoElement, issue){
 	// todod log the data
 	console.log(videoElement.id+": "+issue);
@@ -270,7 +280,7 @@ $(function() {
 		titleTextTemplate='<tr><td>{1}</td></tr>';
 		insert='';
 		title='';
-		a='<video id="video_{0}" preload="true"  width="1" poster="../imgs/poster.png"><source src="{1}" type="video/mp4"> Sorry, your browser does not support embedded videos. </video>'+
+		a='<video loop="1" id="video_{0}" preload="true"  width="1" poster="../imgs/poster.png"><source src="{1}" type="video/mp4"> Sorry, your browser does not support embedded videos. </video>'+
 		'<input type="hidden" id="video_n_play_{0}" name="video_n_play_{0}" value="0">'+
 		'<input type="hidden" id="video_n_finish_{0}" name="video_n_finish_{0}" value="0">'+
 		'<input type="hidden" id="video_play_duration_{0}" name="video_play_duration_{0}" value="0">'+
@@ -303,7 +313,7 @@ $(function() {
 		}, false );
 
 
-
+		videoElement.addEventListener("click", togglePlayPause)
 		videoElement.addEventListener("stalled",function(){issuePlayingVideo(videoElement ,'stalled');},false);
 		videoElement.addEventListener("suspend",function(){issuePlayingVideo(videoElement ,'suspend');},false);
 		videoElement.addEventListener("abort",function(){issuePlayingVideo(videoElement ,'abort');},false);
@@ -383,7 +393,7 @@ function onFinish(t){
 		<div  class="panel-collapse collapse in" id="instruction">
 			  <div class="panel-body">
 
-                  <p align="center"> <span class="velmnt" id="test1" data-scale="max-height" data-src="https://pcrowdv-materials.s3.us-west-1.amazonaws.com/assets/clips/sample.mp4" >&nbsp;</span> </p>
+                  <p align="center"> <span class="velmnt" id="test1" data-scale="max-height" data-src="https://ic3mi.blob.core.windows.net/public/videos/p910/20230929/1x_8x/turk7_portrait_691635355942996791_1s_9s_out.mp4" >&nbsp;</span> </p>
 				   <p align="center"> <span class="velmnt" id="test2" data-src="https://pcrowdv-materials.s3.us-west-1.amazonaws.com/assets/clips/test_small.mp4"
 				   data-onfinished="onFinish" >&nbsp;</span> </p>
 

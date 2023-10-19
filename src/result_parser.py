@@ -149,9 +149,11 @@ def check_if_session_should_be_used(data):
         should_be_used = False
         failures.append('gold')
 
+    # disable since we allow infinite looping
     if 'percent_over_play_duration' in data and data['percent_over_play_duration'] > float(config['accept_and_use']['viewing_duration_over']):
-        should_be_used = False
-        failures.append('viewing_duration')
+        #should_be_used = False
+        #failures.append('viewing_duration')
+        pass
 
     if 'correct_matrix_bigger_equal' in config['accept_and_use']:
         # for backward compatibility
@@ -189,7 +191,8 @@ def check_tps(row, method):
     """
     correct_tps = 0
     tp_url = row[config['trapping']['url_found_in']]
-    tp_correct_ans = [int(float(row[config['trapping']['ans_found_in']]))]
+    #tp_correct_ans = [int(float(row[config['trapping']['ans_found_in']]))]
+    tp_correct_ans = [2, 3, 4] # FOr our trapping questions, allow middle answer and slightly better answers. 
     try:
         suffix = ''
         for q_name in question_names:
@@ -258,7 +261,7 @@ def check_gold_question(row, method):
         return None
     return correct_gq
 
-
+# disabled for ic3mi study 
 def check_matrix(row):
     """
     check if the matrix questions are answered correctly
@@ -274,25 +277,26 @@ def check_matrix(row):
         c1_correct -= 2
         t1_correct -= 3
 
-    c2_correct = float(row['input.t2_matrix_c'])
-    t2_correct = float(row['input.t2_matrix_t'])
+    # c2_correct = float(row['input.t2_matrix_c'])
+    # t2_correct = float(row['input.t2_matrix_t'])
 
-    given_c1 = float(row['answer.t1_circles'])
-    given_t1 = float(row['answer.t1_triangles'])
+    # given_c1 = float(row['answer.t1_circles'])
+    # given_t1 = float(row['answer.t1_triangles'])
 
-    given_c2 = float(row['answer.t2_circles'])
-    given_t2 = float(row['answer.t2_triangles'])
+    # given_c2 = float(row['answer.t2_circles'])
+    # given_t2 = float(row['answer.t2_triangles'])
 
-    n_correct = 0
+    # n_correct = 0
 
-    if int(c1_correct) == int(given_c1) and int(t1_correct) == int(given_t1):
-        n_correct += 1
-    #else:
-    #    print(f'wrong matrix 1: c1 {c1_correct},{given_c1} | t1 {t1_correct},{given_t1}')
-    if int(c2_correct) == int(given_c2) and int(t2_correct) == int(given_t2):
-        n_correct += 1
-    #else:
+    # if int(c1_correct) == int(given_c1) and int(t1_correct) == int(given_t1):
+    #     n_correct += 1
+    # #else:
+    # #    print(f'wrong matrix 1: c1 {c1_correct},{given_c1} | t1 {t1_correct},{given_t1}')
+    # if int(c2_correct) == int(given_c2) and int(t2_correct) == int(given_t2):
+    #     n_correct += 1
+    # #else:
     #    print(f'wrong matrix 2: c2 {c2_correct},{given_c2} | t2 {t2_correct},{given_t2}')
+    n_correct = 2
     return n_correct
 
 
@@ -471,6 +475,9 @@ def evaluate_rater_performance(data, use_sessions, reject_on_failure=False):
     grouped = df.groupby(['worker_id', 'accept_and_use']).size().unstack(fill_value=0).reset_index()
     
     grouped = grouped.rename(columns={0: 'not_used_count', 1: 'used_count'})
+    if "not_used_count" not in grouped.columns.tolist():
+        grouped['not_used_count'] = 0
+
     grouped['acceptance_rate'] = (grouped['used_count'] * 100)/(grouped['used_count'] + grouped['not_used_count'])
     grouped.to_csv('tmp.csv')
 
@@ -635,6 +642,10 @@ def save_rejected_ones(data, path, wrong_vcodes, not_accepted_reasons, num_rej_p
     df = pd.DataFrame(data)
     df = df[df.accept == 0]
     c_rejected = df.shape[0]
+    if c_rejected == 0:
+        print('No answers were rejected')
+        return 
+
     if wrong_vcodes is not None:
         c_rejected += len(wrong_vcodes.index)
     df = df[df.status == 'Submitted']
@@ -644,7 +655,8 @@ def save_rejected_ones(data, path, wrong_vcodes, not_accepted_reasons, num_rej_p
         print(f'    overall {c_rejected} answers are rejected, from them {df.shape[0]} were in submitted status')
 
     not_accepted_reasons_list = list(collections.Counter(not_accepted_reasons).items())
-    not_accepted_reasons_list.append(('Wrong Verification Code', len(wrong_vcodes.index)))
+    # temp disable, having this on disqualified almost everyone for some reason. 
+    #not_accepted_reasons_list.append(('Wrong Verification Code', len(wrong_vcodes.index)))
     if num_rej_perform != 0:
         not_accepted_reasons_list.append(('Performance', num_rej_perform))
 
@@ -1002,7 +1014,7 @@ def transform(test_method, sessions, agrregate_on_condition, is_worker_specific)
         tmp[mos_name] = statistics.mean(votes)
         if tmp['n'] > 1:
             tmp[f'std{question_name_suffix}'] = statistics.stdev(votes)
-            tmp[f'95%CI{question_name_suffix}'] = (1.96 * tmp[f'std{question_name_suffix}']) / math.sqrt(tmp['n'])
+            tmp[f'95%CI{question_name_suffix}'] = (1.96 * tmp[f'std{question_name_suffix}']) / math.sqrt(tmp['n'] - 1) # use n - 1 CI, same as STD 
         else:
             tmp[f'std{question_name_suffix}'] = None
             tmp[f'95%CI{question_name_suffix}'] = None
@@ -1236,7 +1248,8 @@ def analyze_results(config, test_method, answer_path, amt_ans_path,  list_of_req
     n_workers, n_workers_used = number_of_unique_workers(full_data, accepted_sessions)
     print(f"{n_workers} workers participated in this batch, answers of {n_workers_used} are used.")
     # disabled becuase of the HITAPP_server
-    calc_stats(answer_path)
+    if amt_ans_path is not None:
+        calc_stats(answer_path)
     # votes_per_file, votes_per_condition = transform(accepted_sessions)
     if len(accepted_sessions) > 1:
         condition_set = []
@@ -1285,6 +1298,8 @@ def analyze_results(config, test_method, answer_path, amt_ans_path,  list_of_req
                 votes_to_use = votes_per_file
             calc_quality_bonuses(quantity_bonus_df, accepted_sessions, votes_to_use, config, quality_bonus_path,
                                  n_workers, test_method, use_condition_level)
+        else: 
+            votes_to_use = votes_per_file
 
         inter_rate_reliability, avg_irr = calc_inter_rater_reliability( accepted_sessions, votes_to_use, test_method,
                                                                          use_condition_level)
