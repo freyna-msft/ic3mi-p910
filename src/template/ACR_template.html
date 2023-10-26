@@ -1690,11 +1690,11 @@ function getACRScale(type, is_training){
 	if (is_training) p = 't';
 
 	template5 =
-	'<tr class="tr-left"><td class="no-wrap"><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="1"required="">Left is much better</label></div></td>'+
-	'<td class="no-wrap"><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="2">Left is slightly better</label></div></td>'+
+	'<tr class="tr-left"><td class="no-wrap"><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="1"required="">A is much better</label></div></td>'+
+	'<td class="no-wrap"><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="2">A is slightly better</label></div></td>'+
 	'<td class="no-wrap"><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="3">Quality is comparable</label></div></td>'+
-	'<td class="no-wrap"><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="4">Right is slightly better</label></div></td>'+
-	'<td class="no-wrap"><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="5">Right is much better</label></div></td></tr>';
+	'<td class="no-wrap"><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="4">B is slightly better</label></div></td>'+
+	'<td class="no-wrap"><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="5">B is much better</label></div></td></tr>';
 
 
 	template9 =
@@ -2011,6 +2011,21 @@ function playVideo_continue(id, video, is_dcr){
 
     video.setAttribute("oldwidth",oldW);
     video.setAttribute("oldheight",oldH);
+
+	// always scale for our study, max-height didnt work
+	// video.setAttribute("height",fullH);
+	// video.setAttribute("width",fullW);
+
+	// fix vertical videos
+	const videoAspectRatio = (video.videoWidth / 2) / video.videoHeight; 
+	const offsetPx = 15; // slight offset so vertical videos can show timestamp
+
+	// fit by height if portrait mode 
+	if (videoAspectRatio < 1) { 
+		video.setAttribute("width", (fullH * videoAspectRatio) - offsetPx);
+		video.setAttribute("height", fullH - offsetPx);
+	}
+
 	let scale_type = "";
 	if ($('#{0}'.f(id)).attr('data-scale')){
 		scale_type = $('#{0}'.f(id)).attr('data-scale');
@@ -2019,18 +2034,6 @@ function playVideo_continue(id, video, is_dcr){
 	}
 	if (scale_type=="max-height"){
 		$( "#"+video.id ).closest( "td" ).removeClass("vtd");
-		video.setAttribute("height",fullH);
-		video.setAttribute("width",fullW);
-
-		// fix vertical videos
-		const videoAspectRatio = (video.videoWidth / 2) / video.videoHeight; 
-		const offsetPx = 15; // slight offset so vertical videos can show timestamp
-
-		// fit by height if portrait mode 
-		if (videoAspectRatio < 1) { 
-			video.setAttribute("width", (fullH * videoAspectRatio) - offsetPx);
-			video.setAttribute("height", fullH - offsetPx);
-		}
 	}
 
     video.play();
@@ -2441,7 +2444,7 @@ function avoidAnsweringBeforeWatchingThrough(){
 					<li><b>Calibration (every <b class="setup_time"> 0</b> minutes):</b> Calibrate your screen to be able to perform these type of tasks</li>
 					<li><b>Setup (every <b class="setup_time"> 0</b> minutes):</b> Configure your system and validate it by answering 5 questions</li>
 					<li><b>Training (every <b class="training_time"> 0 </b>):</b> <b class="question_number_training"> 0 </b> questions, same as "Ratings" but appears just once a day. Meant for warm-up. </li>
-					<li><b>Rating:</b> Watch <b class="question_number"> 0 </b> videos and give <b>your opinion about the relative quality of the side-by-side clips.</b></li>
+					<li><b>Rating:</b> Watch <b class="question_number"> 0 </b> videos and give <b>your opinion about the relative quality of the back-to-back clips.</b></li>
 				</ul>
 				<p>Note that you should watch all videos in full screen. </p>
 				<p>You should follow the rules mentioned below, otherwise your answers will be invalidated.</p>
@@ -2466,10 +2469,10 @@ function avoidAnsweringBeforeWatchingThrough(){
 
 				<p>Bonuses will be assigned with in 7 days.</p>
 				<b>Please perform up to <b class="max_allowed_hits"> 0 </b> HITs from this group. If you do more than that, the <u>rest will be rejected.</u></b>
-				<b>Completing 20 HITs should only take around 30-45 minutes. </b>
+				<b>Completing 20 HITs should only take around 1 hour. </b>
 
 				<h3>Attention: </h3>
-				  <p>This HIT includes one or more Control clips (gold clips). Control clips are ones that we know that answer for and should be very easy to rate (One side is very clearly much better than the other). We include control clips in the HIT to ensure raters are paying attention and their environment hasn't changed.
+				  <p>This HIT includes one or more Control clips (gold clips). Control clips are ones that we know that answer for and should be very easy to rate (One video is very clearly much better than the other). We include control clips in the HIT to ensure raters are paying attention and their environment hasn't changed.
 					  Wrong answers to control clip(s) will result in rejection of the HIT.</p>
   
 				  </p>
@@ -2795,7 +2798,7 @@ function avoidAnsweringBeforeWatchingThrough(){
 
 			<ul>
 
-			<li> Both video clips play back side by side in order to make it easier to compare one vs the other. We do not allow pausing in order to focus 
+			<li> We do not allow pausing in order to focus 
 				on the temporal nature of the video. If necessary, please try to watch the video as many times as you want to confirm your observations.
 			</li>
 
@@ -2854,7 +2857,7 @@ function avoidAnsweringBeforeWatchingThrough(){
 				<div class="panel-body">
 				<p> Please answer the following <b class="question_number_training"> 0 </b> questions.
 					<p>For each question, please carefully watch the video clip by clicking on the play button in full-screen mode.
-					Compare both clips, the one on the left versus the one on the right, and decide on one of the 5 options.
+					Compare both clips, the first one versus the second one, and decide on one of the 5 options.
 					Carefully observe the entire video clip before making your judgment. Feel free to watch the video clips as many times as you want.</p>
 
 				   <!-- <p> <b>Note</b> that the scale will be activated when the corresponding video clip played until the end. </p> -->
@@ -2901,7 +2904,7 @@ function avoidAnsweringBeforeWatchingThrough(){
 			<div class="panel-body">
 				<p> Please answer the following <b class="question_number"> 0 </b> questions.</p>
 				<p>For each question, please carefully watch the video clip by clicking on the play button in full-screen mode.
-					Compare both clips, the one on the left versus the one on the right, and decide on one of the 5 options.
+					Compare both clips, the first one versus the second one, and decide on one of the 5 options.
 					Carefully observe the entire video clip before making your judgment. Feel free to watch the video clips as many times as you want.</p>
 
 				   <!-- <p> <b>Note</b> that the scale will be activated when the corresponding video clip played until the end. </p> -->
