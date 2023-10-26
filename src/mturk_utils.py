@@ -195,35 +195,47 @@ def approve_reject_assignments_together(client, assignment_path):
         successApp = 0
         successRej = 0
         failed=0
-        for row in reader:
+        for i, row in enumerate(reader):
             if line_count == 0:
                 assert 'assignmentId' in row,  f"No column found with name 'assignmentId' in [{assignment_path}]"
                 assert 'HITId' in row, f"No column found with name 'HITId' in [{assignment_path}]"
                 assert 'Approve' in row, f"No column found with name 'Approve' in [{assignment_path}]"
                 assert 'Reject' in row, f"No column found with 'Reject' in [{assignment_path}]"
-
+            
+            response = None
             if row['Approve'] =='x':
                 # approving
-                response = client.approve_assignment(
-                    AssignmentId=row['assignmentId']
-                )
-                if response['ResponseMetadata']['HTTPStatusCode'] == 200:
-                    successApp += 1
-                else:
-                    print(f'\tFailed:  "Approving assignment" {row["assignmentId"]}:')
-                    failed += 1
+                try:
+                    response = client.approve_assignment(
+                        AssignmentId=row['assignmentId']
+                    )
+                    if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+                        successApp += 1
+                        print(f'Successfully accepted row #{i}')
+                    else:
+                        print(f'\tFailed:  "Approving assignment" {row["assignmentId"]}:')
+                        failed += 1
+                except:
+                    print(f'failed  row #{i}')
+
+                
 
             else:
                 # rejecting
-                response = client.reject_assignment(
-                    AssignmentId=row['assignmentId'],
-                    RequesterFeedback=row['Reject']
-                )
-                if response['ResponseMetadata']['HTTPStatusCode'] == 200:
-                    successRej += 1
-                else:
-                    print(f'\tFailed:  "Rejecting assignment" {row["assignmentId"]}:')
-                    failed += 1
+                try:
+                    response = client.reject_assignment(
+                        AssignmentId=row['assignmentId'],
+                        RequesterFeedback=row['Reject']
+                    )
+                    if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+                        print(f'Successfully rejected row #{i}')
+                        successRej += 1
+                    else:
+                        print(f'\tFailed:  "Rejecting assignment" {row["assignmentId"]}:')
+                        failed += 1
+                except:
+                    print(f'failed  row #{i}')
+                
 
             line_count += 1
         print(f'Processed {line_count} assignments - Approved {successApp} assignments and reject {successRej}. '

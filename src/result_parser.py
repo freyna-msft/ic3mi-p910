@@ -192,7 +192,7 @@ def check_tps(row, method):
     correct_tps = 0
     tp_url = row[config['trapping']['url_found_in']]
     #tp_correct_ans = [int(float(row[config['trapping']['ans_found_in']]))]
-    tp_correct_ans = [2, 3, 4] # FOr our trapping questions, allow middle answer and slightly better answers. 
+    tp_correct_ans = [2, 3, 4] # For our trapping questions, allow middle answer and slightly better answers. 
     try:
         suffix = ''
         for q_name in question_names:
@@ -574,7 +574,8 @@ def save_approve_rejected_ones_for_gui(data, path, wrong_vcodes):
         wrong_vcodes_assignments["Approve"] = ""
         wrong_vcodes_assignments["Reject"] = "wrong verification code"
         wrong_vcodes_assignments.rename(columns={'AssignmentId': 'assignmentId'}, inplace=True)
-        small_df = small_df.append(wrong_vcodes_assignments, ignore_index=True)
+        #small_df = small_df.append(wrong_vcodes_assignments, ignore_index=True)
+        small_df = pd.concat([small_df, wrong_vcodes_assignments], ignore_index=True)
     small_df.to_csv(path, index=False)
 
 
@@ -655,8 +656,7 @@ def save_rejected_ones(data, path, wrong_vcodes, not_accepted_reasons, num_rej_p
         print(f'    overall {c_rejected} answers are rejected, from them {df.shape[0]} were in submitted status')
 
     not_accepted_reasons_list = list(collections.Counter(not_accepted_reasons).items())
-    # temp disable, having this on disqualified almost everyone for some reason. 
-    #not_accepted_reasons_list.append(('Wrong Verification Code', len(wrong_vcodes.index)))
+    not_accepted_reasons_list.append(('Wrong Verification Code', len(wrong_vcodes.index)))
     if num_rej_perform != 0:
         not_accepted_reasons_list.append(('Performance', num_rej_perform))
 
@@ -668,7 +668,8 @@ def save_rejected_ones(data, path, wrong_vcodes, not_accepted_reasons, num_rej_p
         wrong_vcodes_assignments = wrong_vcodes[['AssignmentId']].copy()
         wrong_vcodes_assignments["feedback"] = "Wrong verificatioon code"
         wrong_vcodes_assignments.rename(columns={'AssignmentId': 'assignmentId'}, inplace=True)
-        small_df = small_df.append(wrong_vcodes_assignments, ignore_index=True)
+        #small_df = small_df.append(wrong_vcodes_assignments, ignore_index=True)
+        small_df = pd.concat([small_df, wrong_vcodes_assignments], ignore_index=True)
     small_df.to_csv(path, index=False)
 
 
@@ -773,7 +774,7 @@ def calc_inter_rater_reliability(answer_list, overall_mos, test_method, use_cond
     df = pd.DataFrame(answer_list)
     tmp = pd.DataFrame(overall_mos)
     if use_condition_level:
-        aggregate_on = 'condition_name'
+        aggregate_on = 'model_family'
     else:
         aggregate_on = 'file_url'
     c_df = tmp[[aggregate_on, mos_name]].copy()
@@ -1114,7 +1115,8 @@ def calc_stats(input_file):
 
     # no qual
     df_no_qual = df[df['Answer.2_birth_year'].isna()]
-    df_no_qual_no_setup = df_no_qual[df_no_qual['Answer.t1_circles'].isna()]
+    #df_no_qual_no_setup = df_no_qual[df_no_qual['Answer.t1_circles'].isna()]
+    df_no_qual_no_setup = df_no_qual
     only_rating = df_no_qual_no_setup[df_no_qual_no_setup['Answer.t1'].isna()].copy()
 
     if len(only_rating)>0:
