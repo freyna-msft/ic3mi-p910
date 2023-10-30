@@ -2444,7 +2444,7 @@ function avoidAnsweringBeforeWatchingThrough(){
 					<li><b>Calibration (every <b class="setup_time"> 0</b> minutes):</b> Calibrate your screen to be able to perform these type of tasks</li>
 					<li><b>Setup (every <b class="setup_time"> 0</b> minutes):</b> Configure your system and validate it by answering 5 questions</li>
 					<li><b>Training (every <b class="training_time"> 0 </b>):</b> <b class="question_number_training"> 0 </b> questions, same as "Ratings" but appears just once a day. Meant for warm-up. </li>
-					<li><b>Rating:</b> Watch <b class="question_number"> 0 </b> videos and give <b>your opinion about the relative quality of the back-to-back clips.</b></li>
+					<li><b>Rating:</b> Watch <b class="question_number"> 0 </b> videos and give <b>your opinion about the relative quality of the side-by-side clips.</b></li>
 				</ul>
 				<p>Note that you should watch all videos in full screen. </p>
 				<p>You should follow the rules mentioned below, otherwise your answers will be invalidated.</p>
@@ -2794,13 +2794,29 @@ function avoidAnsweringBeforeWatchingThrough(){
 			<div  class="panel-collapse collapse in" id="instructionImp">
 			<div class="panel-body">
 			<p>Almost ready to begin. Please carefully read the following. </p>
+			<p>Your task is to view video clips with a replaced background and select
+				the one with the best replacement.
+			</p>
+
+			<p><b>Imperfections to look for: </b></p>
+			<ul>
+				<li>Parts of the person (e.g. fingers, hair buns, ears, eyeglasses) are missing.</li>
+				<li>Parts of the person flicker (appear and disappear)</li>
+				<li>Parts of the original background are revealed.</li>
+				<li>The edge contour around a person may seem inaccurate or inconsistent (e.g. hair has gaps which reveal the real background)</li>
+			</ul>
+
 			<p><b>Important Notes: </b></p>
 
 			<ul>
 
-			<li> We do not allow pausing in order to focus 
-				on the temporal nature of the video. If necessary, please try to watch the video as many times as you want to confirm your observations.
+			<li>
+				Focus on the quality of the background replacement. General video quality such as brightness and color should not be rated.
 			</li>
+
+			<li> We do not allow pausing in order to focus on the temporal nature of the video. </li>
+
+			<li> If necessary, please watch the video multiple times to confirm your observations.</li>
 
 			<!-- <div class="row">
 				<p>Here is an example:</p>
@@ -2808,14 +2824,13 @@ function avoidAnsweringBeforeWatchingThrough(){
 						<span class="velmnt" id="ins_id1" data-src-clip="https://p910.azureedge.net/video/instruction_videos/videoSRC14_block_2.mp4" data-onfinished="playedVideoIns"></span>
 				</p>
 			</div> -->
-			<li> While watching the video you may see parts of the person flicker (appear and disappear) more in one video vs the other. </li>
+			<li> It is very important that you fully concentrate on the entire video clip. If something is distracting you, please watch the video again.</li>
 			<!-- <div class="row">
 				<p>Here is an example:</p>
 				<p align="center">
 						<span class="velmnt" id="ins_id2" data-src-clip="https://p910.azureedge.net/video/instruction_videos/videoSRC14_dis_2.mp4" data-onfinished="playedVideoIns"></span>
 				</p>
 			</div> -->
-			<li> You may notice that certain parts of the person (e.g. fingers, hair buns, ears, eyeglasses) are missing throughout the video. </li>
 			<!-- <div class="row">
 				<p>Here is an example:</p>
 				<p align="center">
@@ -2823,18 +2838,11 @@ function avoidAnsweringBeforeWatchingThrough(){
 				</p>
 			</div> -->
 
-			<li> The edge contour around a person may seem inaccurate or inconsistent (e.g. hair has gaps which do not show the desired background). </li>
 
-			<li> It is not uncommon that multiple issues above appear to happen in tandem within the same clip. </li>
-
-			<li> It is very important that when watching a video that you fully concentrate on the entire scene. 
-				If something is distracting you, please watch the video again. </li>
 			<!-- </ul>
 
 			<b>Important notes:</b>
 			<ul> -->
-			<li> Impairments can happen in specific area (corners or center of image) and for a short period of time within a video clip.
-				So it is very important that when watching a video, fully concentrate on the entire scene.</li>
 			<li>Your ratings will be used for scientific work, <u>please treat them very seriously to contribute with valid results </u>.</li>
 			<li>You may think that an impairment you recognized was due to your Internet connection, but everything you see in the
 				videos was created beforehand, and is <b>not related to your network</b>, so <u>consider them all when you rate the <b>overall quality</b></u>.</li>
