@@ -419,7 +419,6 @@ $(function() {
 			$("#calibration :input").removeAttr("required");
 			cookie_debug_status=cookie_debug_status+"Calibration Exist*";
 			activate_setup_section(true);
-			activate_rest_setup(); // since disabled visual acuity/triangles
 		}
 
 		// given cookie availability disable the setup
@@ -682,8 +681,8 @@ function isSetupDone(){
 	if(!$("input[name='cmp3']").is(':checked')) return;
 
 	// Disable matrix test
-	// if(!$("input[name='t2_circles']").val()) return;
-	// if(!$("input[name='t2_triangles']").val()) return;
+	if(!$("input[name='t2_circles']").val()) return;
+	if(!$("input[name='t2_triangles']").val()) return;
 	validateSetupAnswer();
 }
 
@@ -851,25 +850,18 @@ function reset_visual_acuity(){
 /**
 	Load the step2 of visual acuity test.
 **/
-function continue_visual_acuity(){
-	if (!interact_with_screen_size){
-		alert("Please interact with the screen adjustment buttons");
+function continue_visual_acuity() {
+	if (!interact_with_screen_size) {
+		alert("First, you need to interact with the screen adjustment part.");
 		return;
 	}
 	record_screen_size_credit_card();
 	$("#vat_step").attr("src","https://audiosamplesp808.blob.core.windows.net/p910-assets/imgs/step2.png");
 
 	$('#setup_visual_acity').hide();
-	// Disable step 2, landolt rings and set it result to passed
-	//$('#test_visual_acity').show();
-	visual_acuity_test_passed = true;
-	performed_visual_acuity_test = true;
+	$('#test_visual_acity').show();
 	$('#setup_ready').hide();
 	$('#setup_visual_acity').hide();
-	$(".lc").prop("disabled",true);
-	$("#lc_msg").html("<p style='color:green'>Visual acuity check passed.</p>");
-
-	isQualificationDone();
 	// set the size of landolt c
 	/**
 	Landolt C size  calculation
@@ -1241,21 +1233,19 @@ function check_brightness_test(){
 	$("#matrix_t1_circle_history").val($("#matrix_t1_circle_history").val()+','+c);
 	$("#matrix_t1_triangle_history").val($("#matrix_t1_triangle_history").val()+','+t);
 
-	// disabled for ic3mi study
-	activate_rest_setup();
-	// if (c==(correct_ans['circles'] -2)&& t == (correct_ans['triangles']-3)){
-	// 	//alert('Great! Your answer is correct, continue!');
-	// 	$("#check_matrix").prop("disabled",true);
-	// 	activate_rest_setup();
-	// }else{
-	// 	num_tries_block_matrix++;
-	// 	if (correct_ans['max_tries']-num_tries_block_matrix == 0){
-	// 		disableTheHIT(Hide_HIT_REASON.QUALIFICATION_FAILED_NOW);
-	// 		return;
-	// 	}
-	// 	alert('hmm! not correct, try to change your screen brightness, light in the room, or your position, and try again!\n'+
-	// 	'You can try {0} more time(s).'.f(correct_ans['max_tries']-num_tries_block_matrix));
-	// }
+	if (c==(correct_ans['circles'] -2)&& t == (correct_ans['triangles']-3)){
+		//alert('Great! Your answer is correct, continue!');
+		$("#check_matrix").prop("disabled",true);
+		activate_rest_setup();
+	}else{
+		num_tries_block_matrix++;
+		if (correct_ans['max_tries']-num_tries_block_matrix == 0){
+			disableTheHIT(Hide_HIT_REASON.QUALIFICATION_FAILED_NOW);
+			return;
+		}
+		alert('hmm! not correct, try to change your screen brightness, light in the room, or your position, and try again!\n'+
+		'You can try {0} more time(s).'.f(correct_ans['max_tries']-num_tries_block_matrix));
+	}
 }
 
 /**
@@ -1464,7 +1454,7 @@ function getSum(total, num) {
 function onValueChangeForTpQuestionInTraining(){
 	if(!('knownQuestionInTrainingAns' in config))
 		return;
-	if (!passTrappingQuestion($( this ).val())){
+	if ($( this ).val() != config['knownQuestionInTrainingAns']){
 		alert('Error: your answer does not seem to be correct. Watch the video again carefully and follow the instructions.');
 		$(this).prop('checked', false);
 	}
@@ -1491,7 +1481,7 @@ function passTrappingQuestion(userAnswer) {
 function onValueChangeForTpQuestion(){
 	if(!('knownQuestionAns' in config))
 		return;
-	if (passTrappingQuestion($( this ).val()))
+	if ($( this ).val() == parseInt(config['knownQuestionAns']))
 		$('#tp_check').val(0);
 	else
 		$('#tp_check').val(-1);
@@ -1633,7 +1623,6 @@ function on_calibration_performed(){
 	$("#alert-calibration").show();
 	createCookie(config['cookieName']+"_calibration","un_important",config['showSetupEveryMinutes']);
 	activate_setup_section(true);
-	activate_rest_setup();
 }
 
 
@@ -1720,12 +1709,13 @@ function getACRScale(type, is_training){
 
 /*
 	Generate the training section
+	How do you rate the quality of the following video clips?
 */
 function generate_training_section(){
 	dcr_nav_tab = '<li class="nav-item {1}"><a class="nav-link " data-toggle="tab"  href="#T{0}-panel" id="T{0}-tab " role="tab" aria-controls="T{0}" {2}>Q. {0}</a></li>';
 	dcr_tab ='<div class="tab-pane fade {2}" id="T{0}-panel" role="tabpanel" aria-labelledby="T{0}-tab"><p></p>'+
 	'<div class="row">	<div class="col-sm-2"></div>	<div class="col-sm-8">'+
-	'<p style="margin-top:10px;">{0}. How do you rate the quality of the following video clips? </p> <div class="row"> <p align="center">'+
+	'<p style="margin-top:10px;">{0}. Which video has the best background replacement? </p> <div class="row"> <p align="center">'+
 	'<span class="velmnt" id="t{0}" data-src-clip="{1}" data-onfinished="playedVideoTraining" data-scale="{{cfg.video_player}}">&nbsp;</span> </p> </div> </div> <div class="col-sm-2"></div> </div>'+
 	'<div class="row"> <div>'+
 	'<fieldset id="fieldset_t{0}" class="trainingFieldset" title="">'+
@@ -1763,7 +1753,7 @@ function generate_rating_section(){
 	dcr_nav_tab = '<li class="nav-item {1}"><a class="nav-link " data-toggle="tab"  href="#Q{0}-panel" id="Q{0}-tab " role="tab" aria-controls="Q{0}" {2}>Q. {0}</a></li>';
 	dcr_tab ='<div class="tab-pane fade {2}" id="Q{0}-panel" role="tabpanel" aria-labelledby="Q{0}-tab"><p></p>'+
 	'<div class="row">	<div class="col-sm-2"></div>	<div class="col-sm-8">'+
-	'<p style="margin-top:10px;">{0}. How do you rate the quality of the following video clips? </p> <div class="row"> <p align="center">'+
+	'<p style="margin-top:10px;">{0}. Which video has the best background replacement? </p> <div class="row"> <p align="center">'+
 	'<span class="velmnt" id="Q{0}" data-src-clip="{1}" data-onfinished="playedVideoQ" data-scale="{{cfg.video_player}}">&nbsp;</span> </p> </div> </div> <div class="col-sm-2"></div> </div>'+
 	'<div class="row"> <div>'+
 	'<fieldset id="fieldset_q{0}" title="">'+
@@ -2727,7 +2717,7 @@ function avoidAnsweringBeforeWatchingThrough(){
 			<div  class="panel-collapse collapse in" id="setup_panel">
 				<!-- this is the entire panel that dictates Setup (every 30 minutes) -->
 				<div class="panel-body">
-					<!-- <h4>Calibrate screen brightness / Light in your environment</h4>
+					<h4>Calibrate screen brightness / Light in your environment</h4>
 					<p>Make sure you have a proper environmental light for watching videos (no glare on your screen, neither too dark nor too bright).
 						Use the following task to manually calibrate the brightness of your display. <b>Please make sure to get a correct answer from this task before you continue.</b></p>
 					<p>For more information on how to change the brightness of screen use the following links:</p>
@@ -2737,23 +2727,35 @@ function avoidAnsweringBeforeWatchingThrough(){
 					</ul>
 
 				<p style="margin-top:50px">How many <b>circles and triangles</b> do you see in this picture?. You may <b>change</b> the brightness of your screen, light in your environment, or your position on your seat until you can see all of the shapes. </p>
-				 -->
+				<!-- start Q1  -->
+				<div class="row">
 
-				<!-- end Q1 triangles -->
-				<!-- start Q2 triangles -->
-				
-				<!-- end Q2 -->
+					<div class="col-sm-6" style = "padding:50px"><p>Q1. How many <b>circles</b> and <b>triangles</b> do you see in the image?</p>
+					 <!-- 4 circles and 10 triangles-->
+						<div style="margin-left:20px">
+							<div> <label> Circles: <input type="number" id="t1_circles" name="t1_circles" size="4" required></label></div>
+							<div> <label> Triangles: <input type="number" id="t1_triangles" name="t1_triangles" size="4" required></label></div>
+							<button type="button" class="btn btn-primary" onclick="check_brightness_test()" id="check_matrix">Check my answer</button>
+							<p>You can try it up to <b id="matirx_tries">3</b> times.</p>
+						</div>
 
-				<!-- <div class="alert alert-warning" role="alert">
+					</div>
+					<div class="col-sm-6" style = "padding: 30px"><img src="${t1_matrix_url}" alt="s1" width="80%"></div>
+				</div>
+				<!-- end Q1 triangles -->				
+
+				<div class="alert alert-warning" role="alert">
 			  		<b>NOTE:</b> After that, you are not allowed to change the screen brightness anymore.
-				</div> -->
+				</div>
+				
+				<!-- start Q2 triangles -->
 
-				<!-- <div id="alert-setup-step1" class="alert alert-success" role="alert" hidden>
+				<div id="alert-setup-step1" class="alert alert-success" role="alert" hidden>
   					Well-done! Now you can continue. For the next question you will not get a feedback, but your answer will be evaluated based on that beside others.
-				</div> -->
+				</div>
 
 				<div id="setup-rest" class="disabled_section">
-				<!-- <div class="row">
+				<div class="row">
 					<div class="col-sm-6" style = "padding:50px"><p>Q2. How many <b>circles</b> and <b>triangles</b> do you see in the image?</p>
 						<div style="margin-left:20px">
 							<div> <label> Circles: <input type="number" id="t2_circles" name="t2_circles" size="4" required></label></div>
@@ -2761,7 +2763,9 @@ function avoidAnsweringBeforeWatchingThrough(){
 						</div>
 					</div>
 					<div class="col-sm-6" style = "padding: 30px"><img src="${t2_matrix_url}" alt="t2_matrix_url" width="80%"></div>
-				</div> -->
+				</div>
+				<!-- end Q2 -->
+
 				<!-- Distance check-->
 				<h4>Distance from screen</h4>
 				<div class="alert alert-info" role="alert">
@@ -2957,7 +2961,7 @@ function avoidAnsweringBeforeWatchingThrough(){
 
 	<div class="alert alert-danger" role="alert">
 		<img src="https://audiosamplesp808.blob.core.windows.net/p808-assets/img/attention.png" alt="attention">
-			  <b>NOTE:</b> Any try to perform assignments and neglecting this message is forbidden and leads to rejection of all of your submissions.
+			  <b>NOTE:</b> Any attempt to perform assignments and neglecting this message is forbidden and leads to rejection of all of your submissions.
 			</div>
 </section>
 
