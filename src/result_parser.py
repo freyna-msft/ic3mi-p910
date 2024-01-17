@@ -191,8 +191,8 @@ def check_tps(row, method):
     """
     correct_tps = 0
     tp_url = row[config['trapping']['url_found_in']]
-    #tp_correct_ans = [int(float(row[config['trapping']['ans_found_in']]))]
-    tp_correct_ans = [2, 3, 4] # For our trapping questions, allow middle answer and slightly better answers. 
+    tp_correct_ans = [int(float(row[config['trapping']['ans_found_in']]))]
+    #tp_correct_ans = [2, 3, 4] # For our trapping questions, allow middle answer and slightly better answers. 
     try:
         suffix = ''
         for q_name in question_names:
@@ -268,6 +268,7 @@ def check_matrix(row):
     :param row:
     :return: number of correct answers
     """
+    # return 2
 
     c1_correct = float(row['input.t1_matrix_c'])
     t1_correct = float(row['input.t1_matrix_t'])
@@ -277,26 +278,25 @@ def check_matrix(row):
         c1_correct -= 2
         t1_correct -= 3
 
-    # c2_correct = float(row['input.t2_matrix_c'])
-    # t2_correct = float(row['input.t2_matrix_t'])
+    c2_correct = float(row['input.t2_matrix_c'])
+    t2_correct = float(row['input.t2_matrix_t'])
 
-    # given_c1 = float(row['answer.t1_circles'])
-    # given_t1 = float(row['answer.t1_triangles'])
+    given_c1 = float(row['answer.t1_circles'])
+    given_t1 = float(row['answer.t1_triangles'])
 
-    # given_c2 = float(row['answer.t2_circles'])
-    # given_t2 = float(row['answer.t2_triangles'])
+    given_c2 = float(row['answer.t2_circles'])
+    given_t2 = float(row['answer.t2_triangles'])
 
-    # n_correct = 0
+    n_correct = 0
 
-    # if int(c1_correct) == int(given_c1) and int(t1_correct) == int(given_t1):
-    #     n_correct += 1
-    # #else:
-    # #    print(f'wrong matrix 1: c1 {c1_correct},{given_c1} | t1 {t1_correct},{given_t1}')
-    # if int(c2_correct) == int(given_c2) and int(t2_correct) == int(given_t2):
-    #     n_correct += 1
-    # #else:
+    if int(c1_correct) == int(given_c1) and int(t1_correct) == int(given_t1):
+        n_correct += 1
+    # else:
+    #     print(f'wrong matrix 1: c1 {c1_correct},{given_c1} | t1 {t1_correct},{given_t1}')
+    if int(c2_correct) == int(given_c2) and int(t2_correct) == int(given_t2):
+        n_correct += 1
+    # else:
     #    print(f'wrong matrix 2: c2 {c2_correct},{given_c2} | t2 {t2_correct},{given_t2}')
-    n_correct = 2
     return n_correct
 
 
