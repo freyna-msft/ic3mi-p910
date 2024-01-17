@@ -215,8 +215,8 @@ def approve_reject_assignments_together(client, assignment_path):
                     else:
                         print(f'\tFailed:  "Approving assignment" {row["assignmentId"]}:')
                         failed += 1
-                except:
-                    print(f'failed  row #{i}')
+                except Exception as e:
+                    print(f'failed approving row #{i}: {e}')
 
                 
 
@@ -233,8 +233,8 @@ def approve_reject_assignments_together(client, assignment_path):
                     else:
                         print(f'\tFailed:  "Rejecting assignment" {row["assignmentId"]}:')
                         failed += 1
-                except:
-                    print(f'failed  row #{i}')
+                except Exception as e:
+                    print(f'failed rejecting row #{i}:{e}')
                 
 
             line_count += 1

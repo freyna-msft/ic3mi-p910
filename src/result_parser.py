@@ -656,7 +656,8 @@ def save_rejected_ones(data, path, wrong_vcodes, not_accepted_reasons, num_rej_p
         print(f'    overall {c_rejected} answers are rejected, from them {df.shape[0]} were in submitted status')
 
     not_accepted_reasons_list = list(collections.Counter(not_accepted_reasons).items())
-    not_accepted_reasons_list.append(('Wrong Verification Code', len(wrong_vcodes.index)))
+    if wrong_vcodes is not None:
+        not_accepted_reasons_list.append(('Wrong Verification Code', len(wrong_vcodes.index)))
     if num_rej_perform != 0:
         not_accepted_reasons_list.append(('Performance', num_rej_perform))
 
@@ -1245,6 +1246,7 @@ def analyze_results(config, test_method, answer_path, amt_ans_path,  list_of_req
     wrong_v_code = None
     if amt_ans_path:
         answer_path, wrong_v_code = combine_amt_hit_server(amt_ans_path, answer_path)
+    #wrong_v_code = pd.DataFrame(data=[], columns=wrong_v_code.columns)
     full_data, accepted_sessions = data_cleaning(answer_path, test_method, wrong_v_code)
 
     n_workers, n_workers_used = number_of_unique_workers(full_data, accepted_sessions)

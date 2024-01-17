@@ -67,6 +67,14 @@ def create_msg_img(cfg, score, des, v_width, v_height):
     :param v_height:
     :return:
     """
+    map_score_to_text = {
+        1:'\"Left is much better\"',
+        2:'\"Left is slightly better\"',
+        3:'\"Quality is comparable\"',
+        4:'\"Right is slightly better\"',
+        5:'\"Right is much better\"',
+    }
+
     title = "Attention:"
     # find a proper font size
     expected_text_width = v_width*0.8
@@ -77,14 +85,14 @@ def create_msg_img(cfg, score, des, v_width, v_height):
         text = cfg['message_line1']
     else:
         text = cfg['message_line2']
-    while percentage < 0.95 or percentage > 1.05:
-        if percentage < 0.95:
-            font_size += 5
-        else:
-            font_size -= 1
-        font = ImageFont.truetype("arial.ttf", font_size)
-        text_width = font.getsize(text)[0]
-        percentage = text_width / expected_text_width
+    # while percentage < 0.95 or percentage > 1.05:
+    #     if percentage < 0.95:
+    #         font_size += 5
+    #     else:
+    #         font_size -= 1
+    font_size = 75
+    font = ImageFont.truetype("arial.ttf", font_size)
+    text_width = font.getsize(text)[0]
 
     # create the image
     img = Image.new('RGB', (v_width, v_height), color=(127, 127, 127))
@@ -96,7 +104,7 @@ def create_msg_img(cfg, score, des, v_width, v_height):
     text_height = font.getsize(text)[1]
     d.text(xy=((v_width-text_width)/2, v_height/2-3*text_height), text=text, font=font, fill=(255, 255, 255))
 
-    text = cfg['message_line1'].format(score)
+    text = cfg['message_line1'].format(map_score_to_text[int(score)])
     text_width = font.getsize(text)[0]
     d.text(xy=((v_width - text_width) / 2, v_height / 2 - text_height), text=text, font=font, fill=(255, 255, 255))
 
