@@ -146,7 +146,8 @@ var config ={
     knownQuestionAns: "${TP_ANS}",
     randomizeTrainingQuestions:"true",
     randomizeRatingQuestions:"true",
-    emailAddress: "{{cfg.contact_email}}"
+    emailAddress: "{{cfg.contact_email}}",
+	rating_instructions: "{{cfg.rating_instructions}}",
 }
 
 
@@ -367,6 +368,7 @@ $(function() {
 		loadTextPlaceHolders();
 		generate_training_section();
 		generate_rating_section();
+		generate_rating_instructions_section();
 		avoidAnsweringBeforeWatchingThrough();
 
 		clearInputs();
@@ -1632,6 +1634,75 @@ function on_setup_performed(status){
 
 </script>
 <script type="text/javascript">
+/*
+	Generate appropriate instructions depending on video playback type
+*/
+function getInstructionSection(type){
+	templateQuality = 
+	'<p>Almost ready to start.</p>'+
+	'<p>Here are <b>some</b> of impairments that you may observe within the test with an example. Please read the followings carefully and watch the videos before continuing:</p>'+
+			'<ul>'+
+			'<li> The video (or part of it) can be <b>fragmented</b>. It means that part of the video sample is played <b>blocky</b> and <b>dismembered</b>.</li>'+
+			'<div class="row">'+
+				'<p>Here is an example:</p>'+
+				'<p align="center">'+
+						'<span class="velmnt" id="ins_id1" data-src-clip="https://p910.azureedge.net/video/instruction_videos/videoSRC14_block_2.mp4" data-onfinished="playedVideoIns"></span>'+
+				'</p>'+
+			'</div>'+
+			'<li> The video (or part of it) could be <b>not smooth</b> rather <b>jerky</b>, <b>stuttering</b>, and <b>wobbly</b>. In anotehr term, partly <b>discountinud</b>. </li>'+
+			'<div class="row">'+
+				'<p>Here is an example:</p>'+
+				'<p align="center">'+
+						'<span class="velmnt" id="ins_id2" data-src-clip="https://p910.azureedge.net/video/instruction_videos/videoSRC14_dis_2.mp4" data-onfinished="playedVideoIns"></span>'+
+				'</p>'+
+			'</div>'+
+				'<li> The video (or part of it) cloud be <b>blurred</b>, <b>unclear</b> or <b>washed out</b>.</li>'+
+			'<div class="row">'+
+				'<p>Here is an example:</p>'+
+				'<p align="center">'+
+						'<span class="velmnt" id="ins_id3" data-src-clip="https://p910.azureedge.net/video/instruction_videos/videoSRC14_blur_2.mp4" data-onfinished="playedVideoIns"></span>'+
+				'</p>'+
+			'</div>'+
+			'<li> It could also be a case that a combination of the above impairments happen.</li>'+
+			'</ul>'+
+			'<b>Important notes:</b>'+
+			'<ul>'+
+				'<li> Impairments can happen in specific area (corners or center of image) and for a short period of time within a video clip.'+
+					'So it is very important that when watching a video, fully concentrate on the entire scene. If something distracting you,'+
+					'please watch the video again.</li>'+
+				'<li>Your ratings will be used for scientific work, <u>please treat them very serious to contribute with valid results </u>.</li>'+
+				'<li>You may think that an impairment your recognized was due to your Internet connection, but whatever you see in the'+
+					'videos are created beforehand, and <b>not related to your network</b>, so <u>consider them all when you rate the <b>overall quality</b></u>.</li>'+
+			'</ul>';
+	
+	templateSegmentation = 
+	'<p>Almost ready to start.</p>'+
+	'<p>Your task is to view video clips with a replaced background and select the one with the best replacement. </p>'+
+			'<p><b>Imperfections to look for: </b></p>'+
+				'<ul>'+
+					'<li>Parts of the person (e.g. fingers, hair buns, ears, eyeglasses) are missing.</li>'+
+					'<li>Parts of the person flicker. (appear and disappear)</li>'+
+					'<li>Parts of the original background are revealed.</li>'+
+					'<li>The edge contour around a person may seem inaccurate or inconsistent. (e.g. hair has gaps which reveal the real background)</li>'+
+				'</ul>'+
+			'<p><b>Important Notes: </b></p>'+
+				'<ul>'+
+					'<li> Focus on the quality of the background replacement. General video quality such as brightness and color should not be rated. </li>'+
+					'<li> We do not allow pausing in order to focus on the temporal nature of the video. </li>'+
+					'<li> If necessary, please watch the video multiple times to confirm your observations.</li>'+
+					'<li> It could also be a case that a combination of the above impairments happen.</li>'+
+					'<li> It is very important that you fully concentrate on the entire video clip. If something is distracting you, please watch the video again.</li>'+
+					'<li><b>Please only focus on the quality of background replacement. Ignore any differences in color.</b></li>'+
+				'</ul>';
+
+	if (type == "video_quality"){
+		return templateQuality;
+	}
+	if (type == "segmentation"){
+		return templateSegmentation;
+	}
+	return '<p>No instructions</p>';
+}
 
 /*
 	Input could be 5 or 9
@@ -1641,14 +1712,14 @@ function getSBSScale(type, is_training){
 	let p ='q';
 	if (is_training) p = 't';
 
-	template5 =
+	template5 = 
 	'<tr class="tr-left"><td class="no-wrap"><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="1"required="">Left is much better</label></div></td>'+
 	'<td class="no-wrap"><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="2">Left is slightly better</label></div></td>'+
 	'<td class="no-wrap"><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="3">Quality is comparable</label></div></td>'+
 	'<td class="no-wrap"><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="4">Right is slightly better</label></div></td>'+
 	'<td class="no-wrap"><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="5">Right is much better</label></div></td></tr>';
 
-
+	// TODO make sure this works with generateXSection code, since the horizontal table needs to fit inside its container without overlap between the letters. 
 	template9 =
 	'<tr><td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="9">Right is much better</label></div></td><td class="c">9</td></tr>'+
 	'<tr><td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="8">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label></div></td><td class="c">8</td></tr>'+
@@ -1667,7 +1738,16 @@ function getSBSScale(type, is_training){
 		return template9;
 	}
 	return '';
+}
 
+/* 
+	Generate the instructions about ratings section
+*/
+function generate_rating_instructions_section(){
+	let type = config['rating_instructions']
+	console.log("rating instructions: "+type)
+	template = getInstructionSection(type)
+	$('#ratingsInstructions').append(template)
 }
 
 /*
@@ -2792,29 +2872,11 @@ function avoidAnsweringBeforeWatchingThrough(){
 				</h3>
 			</div>
 			<div  class="panel-collapse collapse in" id="instructionImp">
-			<div class="panel-body">
-			<p>Almost ready to start. </p>
-				<p>Your task is to view video clips with a replaced background and select
-					the one with the best replacement.
-				</p>	
-				<p><b>Imperfections to look for: </b></p>
-				<ul>
-					<li>Parts of the person (e.g. fingers, hair buns, ears, eyeglasses) are missing.</li>
-					<li>Parts of the person flicker. (appear and disappear)</li>
-					<li>Parts of the original background are revealed.</li>
-					<li>The edge contour around a person may seem inaccurate or inconsistent. (e.g. hair has gaps which reveal the real background)</li>
-				</ul>
 
-				<p><b>Important Notes: </b></p>
-				<ul>
-					<li> Focus on the quality of the background replacement. General video quality such as brightness and color should not be rated. </li>
-					<li> We do not allow pausing in order to focus on the temporal nature of the video. </li>
-					<li> If necessary, please watch the video multiple times to confirm your observations.</li>
-					<li> It could also be a case that a combination of the above impairments happen.</li>
-					<li> It is very important that you fully concentrate on the entire video clip. If something is distracting you, please watch the video again.</li>
-					<li><b>Please only focus on the quality of background replacement. Ignore any differences in color.</b></li>
-				</ul>
+ 			<!-- will be generated -->
+			<div class="panel-body", id="ratingsInstructions">
 			</div>
+
 			</div>
 		</div>
 </section>

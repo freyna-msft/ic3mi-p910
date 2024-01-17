@@ -39,7 +39,7 @@ def validate_inputs(df, method):
 
     required_columns_acrhr = ['pvs', 'src', 'block_matrix_url', 'circles', 'triangles', 'trapping_ans', 'trapping_pvs',
                               'gold_clips_pvs', 'gold_clips_ans']
-    if method in ['acr']:
+    if method in ['acr', 'sbs']:
         req = required_columns_acr
     elif method in ['dcr', 'ccr']:
         req = required_columns_dcr
@@ -584,7 +584,7 @@ def create_input_for_mturk(cfg, df, method, output_path):
     :param df:  row input, see validate_inputs for details
     :param output_path: path to output file
     """
-    if method in ['acr']:
+    if method in ['acr', 'sbs']:
         return create_input_for_acr(cfg, df, output_path)
     elif method in ['dcr', 'ccr']:
         return create_input_for_dcr(cfg, df, output_path)
@@ -616,9 +616,9 @@ if __name__ == '__main__':
     cfg_path = args.cfg
     assert os.path.exists(cfg_path), f"No file in {cfg_path}]"
 
-    methods = ["acr", "dcr"]
+    methods = ["acr", "dcr", "sbs"]
     exp_method = args.method.lower()
-    assert exp_method in methods, f"{exp_method} is not a supported method, select from: acr, dcr."
+    assert exp_method in methods, f"{exp_method} is not a supported method, select from: {', '.join(methods)}."
 
     cfg = CP.ConfigParser()
     cfg._interpolation = CP.ExtendedInterpolation()

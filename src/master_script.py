@@ -232,7 +232,7 @@ async def create_hit_app_acr(master_cfg, template_path, out_path, training_path,
     config['accepted_device'] = viewing_condition_cfg[
         'accepted_device'] if 'accepted_device' in viewing_condition_cfg else '["PC"]'
     config['scale_points'] = hit_app_html_cfg['scale'] if 'scale' in hit_app_html_cfg else 5
-
+    config['rating_instructions'] = hit_app_html_cfg['rating_instructions'] if 'rating_instructions' in hit_app_html_cfg else 'video_quality'
 
     config = {**config, **general_cfg}
 
@@ -489,12 +489,18 @@ def get_path(test_method):
     dcr_template_path = os.path.join(os.path.dirname(__file__), 'template/DCR_template.html')
     dcr_ccr_cfg_template_path = os.path.join(os.path.dirname(__file__),
                                              'assets_master_script/result_parser_template.cfg')
+    
+    # for sbs
+    sbs_template_path = os.path.join(os.path.dirname(__file__), 'template/SBS_template.html')
+    sbs_cfg_template_path = os.path.join(os.path.dirname(__file__),
+                                         'assets_master_script/result_parser_template.cfg')
 
     method_to_template = { # (method, is_p831_fest)
         ('acr'): (acr_template_path, acr_cfg_template_path),
         ('dcr'): (dcr_template_path, dcr_ccr_cfg_template_path),
         ('acr-hr'): (acrhr_template_path, acrhr_cfg_template_path),
         ('ccr'): (dcr_template_path, dcr_ccr_cfg_template_path),
+        ('sbs'): (sbs_template_path, sbs_cfg_template_path),
     }
 
     template_path, cfg_path = method_to_template[(test_method)]
@@ -560,7 +566,7 @@ async def main(cfg, test_method, args):
     if test_method in ['dcr', 'ccr']:
         await create_hit_app_dcr(cfg, template_path, output_html_file, args.training_clips, args.trapping_clips,
                                      general_cfg, n_HITs, test_method=='ccr')
-    elif test_method == 'acr':
+    elif test_method in ['acr', 'sbs']:
         await create_hit_app_acr(cfg, template_path, output_html_file, args.training_clips, args.trapping_clips,
                                  general_cfg, n_HITs)
     elif test_method == 'acr-hr':
@@ -595,7 +601,7 @@ if __name__ == '__main__':
     # check input arguments
     args = parser.parse_args()
 
-    methods = ['acr', 'dcr', 'acr-hr', 'pc', 'ccr']
+    methods = ['acr', 'dcr', 'acr-hr', 'pc', 'ccr', 'sbs']
     test_method = args.method.lower()
     assert test_method in methods, f"No such a method supported, please select between {methods}"
     assert os.path.exists(args.cfg), f"No config file in {args.cfg}"
