@@ -591,7 +591,7 @@ function loadTextPlaceHolders(){
 	$('.question_number_training').html(config['trainingUrls'].length);
 	$('.question_number').html(config['questionUrls'].length);
 	$('.instruction_device').html(config['device_accepted_device'].join());
-
+	$('.scale_levels').html(config['scale_points'])
 }
 
 /*
@@ -1721,15 +1721,15 @@ function getSBSScale(type, is_training){
 
 	// TODO make sure this works with generateXSection code, since the horizontal table needs to fit inside its container without overlap between the letters. 
 	template9 =
-	'<tr><td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="9">Right is much better</label></div></td><td class="c">9</td></tr>'+
-	'<tr><td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="8">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label></div></td><td class="c">8</td></tr>'+
-	'<tr><td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="7">Right is slightly better</label></div></td><td class="c">7</td></tr>'+
-	'<tr><td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="6">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label></div></td><td class="c">6</td></tr>'+
-	'<tr><td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="5">Quality is comparable</label></div></td><td class="c">5</td></tr>'+
-	'<tr><td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label></div></td><td class="c">4</td></tr>'+
-	'<tr><td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="3">Left is slightly better</label></div></td><td class="c">3</td></tr>'+
-	'<tr><td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="2">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label></div></td><td class="c">2</td></tr>'+
-	'<tr><td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="1"required="">Left is much better</label></div></td><td class="c">1</td></tr>';
+	'<tr><td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="9">Right is much better</label></div></td><td class="c"></td>'+
+	'<td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="8">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label></div></td>'+
+	'<td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="7">Right is slightly better</label></div></td>'+
+	'<td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="6">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label></div></td>'+
+	'<td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="5">Quality is comparable</label></div></td>'+
+	'<td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label></div></td>'+
+	'<td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="3">Left is slightly better</label></div></td>'+
+	'<td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="2">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label></div></td>'+
+	'<td><div class="radio" ><label ><input type="radio" name="'+p+'{0}" value="1"required="">Left is much better</label></div></td>';
 
 	if (type== 5){
 		return template5;
