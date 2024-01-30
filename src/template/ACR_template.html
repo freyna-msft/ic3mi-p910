@@ -114,6 +114,14 @@ border-bottom-left-radius: 5px;  border-bottom-right-radius: 5px;}
   animation: spin 2s linear infinite;
 }
 
+/* Alternating row colors for table in training/rating questions */
+#table_scale tr:nth-child(even) {
+	background-color: #f2f2f2; /* Gray */
+}
+#table_scale tr:nth-child(odd) {
+	background-color: #ffffff; /* White */
+}
+
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
@@ -1670,6 +1678,94 @@ function on_setup_performed(status){
 </script>
 <script type="text/javascript">
 
+/**
+	Generates a question table by first creating a header row with labels
+	then appending every row of radio buttons for each of N categories. 
+ **/
+function getTableHeader(type){
+	var tempalte = "";
+	if (type == 3) {
+		template =
+			'<tr>'+
+			'<th></th>'+  // Empty cell for the category column
+			'<th style="text-align:center;"><b>Left is better</b></th>'+
+			'<th style="text-align:center;"><b>Similar</b></th>'+
+			'<th style="text-align:center;"><b>Right is better</b></th>'+
+			'</tr>';
+	} else if (type == 5) {
+		template = 
+			'<tr>'+
+			'<th></th>'+  // Empty cell for the category column
+			'<th style="text-align:center;"><b>Left is much better</b></th>'+
+			'<th style="text-align:center;"><b>Left is better</b></th>'+
+			'<th style="text-align:center;"><b>Similar</b></th>'+
+			'<th style="text-align:center;"><b>Right is better</b></th>'+
+			'<th style="text-align:center;"><b>Right is much better</b></th>'+
+			'</tr>';
+	} else {
+		console.log(type)
+		template = "invalid scale points";
+	}
+	return template;
+}
+
+/** 
+	Creates a radio button row for a single category in the Question's table.
+**/
+function getQuestionRow(categoryNum, is_training){
+	let p ='q';
+	if (is_training) p = 't';
+
+	// Get label for current category row being produced
+	var categoryLabels = {
+		1:"Overall quality",
+		2:"All parts of person are included",
+		3:"No background is revealed",
+		4:"No parts of the person flicker in and out",
+		5:"Boundary quality",
+	}
+	let category = categoryLabels[categoryNum];
+	var template = "";
+	// First question is overall quality always, gets handled like normal.
+	if (categoryNum == 1) {
+		template = 
+		'<tr>'+
+		'<td>'+category+'</td>'+
+		'<td style="text-align:center;"><div class="radio"><label><input type="radio" name="'+p+'{0}" value="1" required=""></label></div></td>'+
+		'<td style="text-align:center;"><div class="radio"><label><input type="radio" name="'+p+'{0}" value="2"></label></div></td>'+
+		'<td style="text-align:center;"><div class="radio"><label><input type="radio" name="'+p+'{0}" value="3"></label></div></td>'+
+		'<td style="text-align:center;"><div class="radio"><label><input type="radio" name="'+p+'{0}" value="4"></label></div></td>'+
+		'<td style="text-align:center;"><div class="radio"><label><input type="radio" name="'+p+'{0}" value="5"></label></div></td>'+
+		'</tr>';
+	} else {
+		// Rest of category questions need a unique subscript to be processed differently
+		template = 
+		'<tr>'+
+		'<td>'+category+'</td>'+
+		'<td style="text-align:center;"><div class="radio"><label><input type="radio" name="'+p+'{0}_'+categoryNum+'" value="1" required=""></label></div></td>'+
+		'<td style="text-align:center;"><div class="radio"><label><input type="radio" name="'+p+'{0}_'+categoryNum+'" value="2"></label></div></td>'+
+		'<td style="text-align:center;"><div class="radio"><label><input type="radio" name="'+p+'{0}_'+categoryNum+'" value="3"></label></div></td>'+
+		'<td style="text-align:center;"><div class="radio"><label><input type="radio" name="'+p+'{0}_'+categoryNum+'" value="4"></label></div></td>'+
+		'<td style="text-align:center;"><div class="radio"><label><input type="radio" name="'+p+'{0}_'+categoryNum+'" value="5"></label></div></td>'+
+		'</tr>';
+	}
+	// So question answers will be "q1, q1_2, q1_3" or "t1, t1_2, t1_3 .. up to t1_C"
+	return template;
+}
+
+/**
+ * Add row for every category
+ **/
+function getTableScale(numCategories, is_training) {
+	// First question = normal "Which is better Q" that we want to treat the same as before. Q2 and onwards 
+	// Are the new categorical questions.
+	var tableValues = getQuestionRow(1, is_training);
+	for (let i = 2; i <= numCategories; i++) {
+		tableValues += getQuestionRow(i, is_training);
+	}
+	return tableValues;
+}
+
 /*
 	Input could be 5 or 9
 */
@@ -1715,15 +1811,15 @@ function generate_training_section(){
 	dcr_nav_tab = '<li class="nav-item {1}"><a class="nav-link " data-toggle="tab"  href="#T{0}-panel" id="T{0}-tab " role="tab" aria-controls="T{0}" {2}>Q. {0}</a></li>';
 	dcr_tab ='<div class="tab-pane fade {2}" id="T{0}-panel" role="tabpanel" aria-labelledby="T{0}-tab"><p></p>'+
 	'<div class="row">	<div class="col-sm-2"></div>	<div class="col-sm-8">'+
-	'<p style="margin-top:10px;">{0}. Which video has the best background replacement? </p> <div class="row"> <p align="center">'+
+	'<p style="margin-top:10px;">{0}. Which video has the best background replacement in terms of: </p> <div class="row"> <p align="center">'+
 	'<span class="velmnt" id="t{0}" data-src-clip="{1}" data-onfinished="playedVideoTraining" data-scale="{{cfg.video_player}}">&nbsp;</span> </p> </div> </div> <div class="col-sm-2"></div> </div>'+
 	'<div class="row"> <div>'+
 	'<fieldset id="fieldset_t{0}" class="trainingFieldset" title="">'+
-	'<table class="table md scale" cellspacing="0" cellpadding="0"><thead><tr><th >Comparison</th></tr></thead><tbody>'+
-	getACRScale(config['scale_points'], true)+
+	'<table id="table_scale" class="table md scale" cellspacing="0" cellpadding="0"><thead>'+getTableHeader(config['scale_points'])+'</thead><tbody>'+
+	getTableScale(5, true)+
 	'</tbody></table></fieldset><p></p></div></div> </div>';
 
-	// this will show which url was shown by in which question as their orther will be randomized
+	// this will show which url was shown by in which question as their order will be randomized
 	input_template= '<input id="T{0}_URL" name="T{0}_URL" type="hidden" value="{1}" />';
 
     if (JSON.parse(config['randomizeTrainingQuestions']))
@@ -2884,7 +2980,6 @@ function avoidAnsweringBeforeWatchingThrough(){
 
 
 				</div>
-			<div style="margin-top:0px;font-size:90%;text-align:center">Click <b>next</b> to answer all <b class="question_number_training"> 0 </b> questions.</div>
 			<nav aria-label="..." id="navNextPreT">
 			  <ul class="pager">
 				<li class="previous" onclick="showPreviousQuestionInTrainingSection();"><a href="#trainingTabs" class="page-link"  role="button"><span aria-hidden="true">&larr;</span>Previous</a></li>
@@ -2928,7 +3023,6 @@ function avoidAnsweringBeforeWatchingThrough(){
 				<ul class="nav nav-tabs" role="tablist" id="nav-tab-ul"> </ul>
 				<!-- will be generated -->
 				<div class="tab-content" id="nav-tabContent-rating">	</div>
-				<div style="margin-top:0px;font-size:90%;text-align:center">Click <b>next</b> to answer all <b class="question_number">0</b> questions, then submit your response.</div>
 				<nav aria-label="..." id="navNextPre">
 				  <ul class="pager">
 					<li class="previous" id="prev-rating" onclick="showPreviousQuestionInRatingSection();"><a href="#navNextPre" class="page-link"  role="button" ><span aria-hidden="true">&larr;</span>Previous</a></li>
