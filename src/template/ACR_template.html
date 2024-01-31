@@ -1425,15 +1425,27 @@ var trainingStimulusPlayed;
 function playedVideoTraining(id){
 	let id_num= id.substring(1);
 	played= $("#video_n_finish_{0}".f(id)).val();
+
 	$('input[name="{0}"]'.f(id)).off('change');
+	for (let i = 2; i <= 5; i++) {
+		$('input[name="{0}_{1}"]'.f(id, i)).off('change');
+	}
+
 	eval("trainingStimulusPlayed["+id_num+"-1]=1;");
 	if (trainingStimulusPlayed.reduce(getSum, 0) ==  trainingStimulusPlayed.length){
 		createCookie(config['cookieName']+"_training","un_important",config['forceRetrainingInHours']*60);
 	}
+	// Trapping question in training.
 	if ($('span[id="'+id+'"]').attr("data-src-clip") == config['knownQuestionInTrainingUrl']){
 		element = $('input[name="t{0}"]'.f(id_num));
 		element.unbind();
 		element.on('change', onValueChangeForTpQuestionInTraining);
+
+		for (let i = 2; i <= 5; i++) {
+			element = $('input[name="t{0}_{1}"]'.f(id_num, i));
+			element.unbind();
+			element.on('change', onValueChangeForTpQuestionInTraining);
+		}
 	}
 }
 
@@ -1462,11 +1474,11 @@ function getSum(total, num) {
 function onValueChangeForTpQuestionInTraining(){
 	if(!('knownQuestionInTrainingAns' in config))
 		return;
+
 	if ($( this ).val() != config['knownQuestionInTrainingAns']){
 		alert('Error: your answer does not seem to be correct. Watch the video again carefully and follow the instructions.');
 		$(this).prop('checked', false);
 	}
-
 }
 
 /*
@@ -1505,6 +1517,7 @@ function playedVideoQ(id){
 	isAnyParallelSession();
 	let id_num= id.substring(1);
 	played= $("#video_n_finish_{0}".f(id)).val();
+	
 	if (played== 0 )return;
 	console.log("playedVideoQ  continue");
 
@@ -1512,8 +1525,16 @@ function playedVideoQ(id){
 		element = $('input[name="q{0}"]'.f(id_num));
 		element.unbind();
 		element.on('change', onValueChangeForTpQuestion);
+		for (let i = 2; i <= 5; i++) {
+			element = $('input[name="q{0}_{1}"]'.f(id_num, i));
+			element.unbind();
+			element.on('change', onValueChangeForTpQuestion);
+		}
 	}else{
 		$('input[name="q{0}"]'.f(id_num)).off('change');
+		for (let i = 2; i <= 5; i++) {
+			$('input[name="q{0}_{1}"]'.f(id_num, i)).off('change');
+		}
 		console.log("playedVideoQ remove change listener");
 		// check if already this HIT is counted
 		if (!hitCounterIncreased){
@@ -2468,13 +2489,20 @@ function alertForbiddenChange(){
 */
 function avoidAnsweringBeforeWatchingThrough(){
 	var i;
+	var j;
 	// Training section
 	for (i = 0; i < config['trainingUrls'].length; i++) {
 		$('input[name="t{0}"]'.f(i+1)).on('change', alertForbiddenChange);
+		for (j = 2; j <= 5; j++) {
+			$('input[name="t{0}_{1}"]'.f(i+1, j)).on('change', alertForbiddenChange);
+		}
 	}
 	// Rating section
 	for (i = 0; i < config['questionUrls'].length; i++) {
 		$('input[name="q{0}"]'.f(i+1)).on('change', alertForbiddenChange);
+		for (j = 2; j <= 5; j++) {
+			$('input[name="q{0}_{1}"]'.f(i+1, j)).on('change', alertForbiddenChange);
+		}
 	}
 }
 
