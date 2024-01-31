@@ -115,10 +115,10 @@ border-bottom-left-radius: 5px;  border-bottom-right-radius: 5px;}
 }
 
 /* Alternating row colors for table in training/rating questions */
-#table_scale tr:nth-child(even) {
+#table_scale_train tr:nth-child(even), #table_scale_rating tr:nth-child(even) {
 	background-color: #f2f2f2; /* Gray */
 }
-#table_scale tr:nth-child(odd) {
+#table_scale_train tr:nth-child(odd), #table_scale_rating tr:nth-child(odd) {
 	background-color: #ffffff; /* White */
 }
 
@@ -1713,7 +1713,7 @@ function getTableHeader(type){
 	Creates a radio button row for a single category in the Question's table.
 **/
 function getQuestionRow(categoryNum, is_training){
-	let p ='q';
+	var p ='q';
 	if (is_training) p = 't';
 
 	// Get label for current category row being produced
@@ -1763,7 +1763,8 @@ function getTableScale(numCategories, is_training) {
 	for (let i = 2; i <= numCategories; i++) {
 		tableValues += getQuestionRow(i, is_training);
 	}
-	return tableValues;
+	return tableValues; 
+
 }
 
 /*
@@ -1809,13 +1810,23 @@ function getACRScale(type, is_training){
 */
 function generate_training_section(){
 	dcr_nav_tab = '<li class="nav-item {1}"><a class="nav-link " data-toggle="tab"  href="#T{0}-panel" id="T{0}-tab " role="tab" aria-controls="T{0}" {2}>Q. {0}</a></li>';
+	// dcr_tab ='<div class="tab-pane fade {2}" id="T{0}-panel" role="tabpanel" aria-labelledby="T{0}-tab"><p></p>'+
+	// '<div class="row">	<div class="col-sm-2"></div>	<div class="col-sm-8">'+
+	// '<p style="margin-top:10px;">{0}. Which video has the best background replacement in terms of: </p> <div class="row"> <p align="center">'+
+	// '<span class="velmnt" id="t{0}" data-src-clip="{1}" data-onfinished="playedVideoTraining" data-scale="{{cfg.video_player}}">&nbsp;</span> </p> </div> </div> <div class="col-sm-2"></div> </div>'+
+	// '<div class="row"> <div>'+
+	// '<fieldset id="fieldset_t{0}" class="trainingFieldset" title="">'+
+	// '<table id="table_scale" class="table md scale" cellspacing="0" cellpadding="0"><thead>'+getTableHeader(config['scale_points'])+'</thead><tbody>'+
+	// getTableScale(5, true)+
+	// '</tbody></table></fieldset><p></p></div></div> </div>';
 	dcr_tab ='<div class="tab-pane fade {2}" id="T{0}-panel" role="tabpanel" aria-labelledby="T{0}-tab"><p></p>'+
 	'<div class="row">	<div class="col-sm-2"></div>	<div class="col-sm-8">'+
-	'<p style="margin-top:10px;">{0}. Which video has the best background replacement in terms of: </p> <div class="row"> <p align="center">'+
-	'<span class="velmnt" id="t{0}" data-src-clip="{1}" data-onfinished="playedVideoTraining" data-scale="{{cfg.video_player}}">&nbsp;</span> </p> </div> </div> <div class="col-sm-2"></div> </div>'+
+	'<div class="row"> <p align="center">'+
+	'<span class="velmnt" id="t{0}" data-src-clip="{1}" data-onfinished="playedVideoTraining" data-scale="{{cfg.video_player}}"> </span> </p> </div>'+
+	'<p style="margin-top:10px;">{0}. Which video has the best background replacement in terms of: </p> </div> <div class="col-sm-2"></div> </div>'+
 	'<div class="row"> <div>'+
 	'<fieldset id="fieldset_t{0}" class="trainingFieldset" title="">'+
-	'<table id="table_scale" class="table md scale" cellspacing="0" cellpadding="0"><thead>'+getTableHeader(config['scale_points'])+'</thead><tbody>'+
+	'<table id="table_scale_train" class="table md scale" cellspacing="0" cellpadding="0"><thead>'+getTableHeader(config['scale_points'])+'</thead><tbody>'+
 	getTableScale(5, true)+
 	'</tbody></table></fieldset><p></p></div></div> </div>';
 
@@ -1849,13 +1860,14 @@ function generate_rating_section(){
 	dcr_nav_tab = '<li class="nav-item {1}"><a class="nav-link " data-toggle="tab"  href="#Q{0}-panel" id="Q{0}-tab " role="tab" aria-controls="Q{0}" {2}>Q. {0}</a></li>';
 	dcr_tab ='<div class="tab-pane fade {2}" id="Q{0}-panel" role="tabpanel" aria-labelledby="Q{0}-tab"><p></p>'+
 	'<div class="row">	<div class="col-sm-2"></div>	<div class="col-sm-8">'+
-	'<p style="margin-top:10px;">{0}. Which video has the best background replacement? </p> <div class="row"> <p align="center">'+
-	'<span class="velmnt" id="Q{0}" data-src-clip="{1}" data-onfinished="playedVideoQ" data-scale="{{cfg.video_player}}">&nbsp;</span> </p> </div> </div> <div class="col-sm-2"></div> </div>'+
+	'<div class="row"> <p align="center">'+
+	'<span class="velmnt" id="Q{0}" data-src-clip="{1}" data-onfinished="playedVideoQ" data-scale="{{cfg.video_player}}"> </span> </p> </div>'+
+	'<p style="margin-top:10px;">{0}. Which video has the best background replacement in terms of: </p> </div> <div class="col-sm-2"></div> </div>'+
 	'<div class="row"> <div>'+
 	'<fieldset id="fieldset_q{0}" title="">'+
-	'<table class="table md scale" cellspacing="0" cellpadding="0"><thead><tr><th >Comparison</th></tr></thead><tbody>'+
-	getACRScale(config['scale_points'], false)+
-	'</tbody></table></fieldset><p></p></div> </div> </div>';
+	'<table id="table_scale_rating" class="table md scale" cellspacing="0" cellpadding="0"><thead>'+getTableHeader(config['scale_points'])+'</thead><tbody>'+
+	getTableScale(5, false)+
+	'</tbody></table></fieldset><p></p></div></div> </div>';
 
 	// this will show which url was shown by in which question as their orther will be randomized
 	input_template= '<input id="Q{0}_URL" name="Q{0}_URL" type="hidden" value="{1}" />';
